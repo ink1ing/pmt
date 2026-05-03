@@ -4,6 +4,7 @@ import Foundation
 @MainActor
 final class SelectionRewriter {
     private let store: ConfigStore
+    private let activityIndicator = RewriteActivityIndicator()
     private var isRunning = false
 
     init(store: ConfigStore) {
@@ -16,11 +17,13 @@ final class SelectionRewriter {
             return
         }
         isRunning = true
+        activityIndicator.show()
         store.addLog("收到改写触发，目标：\(FrontmostAppTracker.displayName(for: targetApplication))")
 
         Task {
             defer {
                 Task { @MainActor in
+                    self.activityIndicator.hide()
                     self.isRunning = false
                 }
             }

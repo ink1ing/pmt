@@ -38,6 +38,9 @@ enum PermissionManager {
 
     static func requestInputMonitoringAccess(language: AppLanguage) -> String {
         let granted = IOHIDRequestAccess(kIOHIDRequestTypeListenEvent)
+        if !granted {
+            openInputMonitoringSettings()
+        }
         switch (language, granted) {
         case (.zhHans, true): return "输入监控权限已开启"
         case (.zhHans, false): return "已请求输入监控权限，请在系统设置中允许 PMT 后重启应用"
@@ -47,7 +50,7 @@ enum PermissionManager {
     }
 
     static func keyboardPermissionSummary(language: AppLanguage) -> String {
-        let separator = language == .zhHans ? "；" : "; "
+        let separator = "\n"
         return "\(accessibilityStatus(language: language))\(separator)\(inputMonitoringStatus(language: language))"
     }
 

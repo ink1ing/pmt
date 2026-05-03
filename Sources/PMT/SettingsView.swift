@@ -8,52 +8,41 @@ struct SettingsView: View {
     private let controlWidth: CGFloat = 240
     private let hotkeyControlWidth: CGFloat = 60
     private let modelColumnWidth: CGFloat = 240
-    @State private var showUsage = false
-    @State private var showOtherFeatures = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             usageSection
             Divider()
-            apiSection
-            Divider()
-            promptSection
-            Divider()
-            hotkeySection
-            Divider()
             permissionsSection
             Divider()
-            HStack(alignment: .bottom) {
-                otherFeaturesSection
-                Spacer()
-                Button(language.text(.saveAll)) {
-                    store.saveAllSections()
-                    onSave()
-                }
-            }
+            apiSection
+            Divider()
+            promptAndHotkeySection
+            Divider()
+            bottomSection
         }
         .padding(18)
         .frame(width: 560)
     }
 
     private var usageSection: some View {
-        DisclosureGroup(isExpanded: $showUsage) {
-            VStack(alignment: .leading, spacing: 8) {
+        HStack(alignment: .center, spacing: 10) {
+            Text(language.text(.usage))
+                .font(.headline)
+                .lineLimit(1)
+
+            Spacer(minLength: 10)
+
+            HStack(alignment: .center, spacing: 10) {
                 Text(language.text(.usageStepPermissionsAndModel))
                 Text(language.text(.usageStepPromptAndHotkey))
                 Text(language.text(.usageStepRewrite))
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-        } label: {
-            HStack {
-                Text(language.text(.usage))
-                    .font(.headline)
-                Spacer(minLength: 12)
-                Text(store.statusMessage)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-            }
+            .font(.body)
+            .foregroundStyle(.secondary)
+            .lineLimit(1)
+            .minimumScaleFactor(0.82)
+            .frame(maxWidth: .infinity, alignment: .trailing)
         }
     }
 
@@ -71,6 +60,7 @@ struct SettingsView: View {
                 .pickerStyle(.segmented)
                 .frame(width: controlWidth)
             }
+            .frame(maxWidth: .infinity, alignment: .trailing)
             HStack(alignment: .top, spacing: 16) {
                 modelProviderLeftColumn
                 .frame(maxWidth: .infinity)
@@ -79,6 +69,7 @@ struct SettingsView: View {
             }
         }
         .disabled(store.isBusy)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     @ViewBuilder
@@ -105,12 +96,10 @@ struct SettingsView: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-                TextField(
-                    language.text(.currentAccount),
-                    text: .constant(store.githubAccountLogin.isEmpty ? language.text(.notAuthorized) : store.githubAccountLogin)
-                )
-                .textFieldStyle(.roundedBorder)
-                .disabled(true)
+                Text("\(language.text(.currentAccount))：\(store.githubAccountLogin.isEmpty ? language.text(.notAuthorized) : store.githubAccountLogin)")
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
             }
         }
     }
@@ -146,20 +135,27 @@ struct SettingsView: View {
         .frame(width: modelColumnWidth, alignment: .trailing)
     }
 
-    private var promptSection: some View {
+    private var promptAndHotkeySection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Text(language.text(.prompt))
-                    .font(.headline)
-                Spacer(minLength: 12)
+            HStack(alignment: .center, spacing: 16) {
+                HStack {
+                    Text(language.text(.hotkeyAndPrompt))
+                        .font(.headline)
+                    Spacer(minLength: 12)
+                    HotkeyRecorder(hotkey: $store.hotkey)
+                        .frame(width: hotkeyControlWidth, height: 28)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
                 Picker("", selection: $store.rewriteMode) {
                     ForEach(RewriteMode.allCases) { mode in
-                        Text(mode.title).tag(mode)
+                        Text(mode.title(language: language)).tag(mode)
                     }
                 }
                 .pickerStyle(.segmented)
                 .frame(width: controlWidth)
             }
+            .frame(maxWidth: .infinity, alignment: .trailing)
             if store.rewriteMode == .custom {
                 TextEditor(text: $store.systemPrompt)
                     .font(.system(.body, design: .monospaced))
@@ -170,18 +166,7 @@ struct SettingsView: View {
                     )
             }
         }
-    }
-
-    private var hotkeySection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Text(language.text(.hotkey))
-                    .font(.headline)
-                Spacer(minLength: 12)
-                HotkeyRecorder(hotkey: $store.hotkey)
-                    .frame(width: hotkeyControlWidth, height: 34)
-            }
-        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var permissionsSection: some View {
@@ -189,23 +174,20 @@ struct SettingsView: View {
             Text(language.text(.permissions))
                 .font(.headline)
             Spacer(minLength: 8)
-            Button(language.text(.checkAccessibility)) {
-                let message = PermissionManager.accessibilityStatus(language: language)
+            Button(language.text(.checkPermissions)) {
+                let message = PermissionManager.keyboardPermissionSummary(language: language)
                 store.statusMessage = message
                 store.addLog(message)
             }
             Button(language.text(.requestAccessibility)) {
-                let message = PermissionManager.requestAccessibilityAccess(language: language)
-                store.statusMessage = message
-                store.addLog(message)
-            }
-            Button(language.text(.checkInputMonitoring)) {
-                let message = PermissionManager.inputMonitoringStatus(language: language)
+                _ = PermissionManager.requestAccessibilityAccess(language: language)
+                let message = PermissionManager.keyboardPermissionSummary(language: language)
                 store.statusMessage = message
                 store.addLog(message)
             }
             Button(language.text(.requestInputMonitoring)) {
-                let message = PermissionManager.requestInputMonitoringAccess(language: language)
+                _ = PermissionManager.requestInputMonitoringAccess(language: language)
+                let message = PermissionManager.keyboardPermissionSummary(language: language)
                 store.statusMessage = message
                 store.addLog(message)
             }
@@ -251,38 +233,50 @@ struct SettingsView: View {
         }
     }
 
-    private var otherFeaturesSection: some View {
-        DisclosureGroup(isExpanded: $showOtherFeatures) {
-            VStack(alignment: .leading, spacing: 16) {
-                HStack(alignment: .center, spacing: 0) {
-                    Toggle(language.text(.showStatusBarIcon), isOn: $store.statusBarIconEnabled)
-                        .toggleStyle(.checkbox)
-                    Spacer()
-                        .frame(width: 16)
-                    Toggle(language.text(.showLogs), isOn: $store.showLogs)
-                        .toggleStyle(.checkbox)
-                    Picker("", selection: $store.language) {
-                        ForEach(AppLanguage.allCases) { language in
-                            Text(language.title).tag(language)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .frame(width: 180)
-                    Button(language.text(.checkForUpdates)) {
-                        store.addLog(language == .zhHans ? "手动检查更新" : "Checking for updates manually")
-                        UpdateManager.shared.checkForUpdates()
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                if store.showLogs {
-                    Divider()
-                    logSection
+    private var bottomSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .center, spacing: 10) {
+                otherFeaturesSection
+                Spacer(minLength: 12)
+                Text(store.statusMessage)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.trailing)
+                Button(language.text(.saveAll)) {
+                    store.saveAllSections()
+                    onSave()
                 }
             }
-            .fixedSize(horizontal: true, vertical: false)
-        } label: {
-            Text(language.text(.otherFeatures))
-                .font(.headline)
+
+            if store.showLogs {
+                Divider()
+                logSection
+            }
+        }
+    }
+
+    private var otherFeaturesSection: some View {
+        HStack(alignment: .center, spacing: 10) {
+            Toggle(language.text(.showStatusBarIcon), isOn: $store.statusBarIconEnabled)
+            .toggleStyle(.checkbox)
+
+            Toggle(language.text(.showLogs), isOn: $store.showLogs)
+            .toggleStyle(.checkbox)
+
+            Picker("", selection: $store.language) {
+                ForEach(AppLanguage.allCases) { language in
+                    Text(language.title).tag(language)
+                }
+            }
+            .pickerStyle(.segmented)
+            .frame(width: 92)
+
+            Button(language.text(.checkForUpdates)) {
+                store.statusMessage = language == .zhHans ? "正在检查更新..." : "Checking for updates..."
+                store.addLog(store.statusMessage)
+                UpdateManager.shared.checkForUpdates()
+            }
         }
     }
 }

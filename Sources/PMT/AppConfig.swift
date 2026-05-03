@@ -10,20 +10,20 @@ enum AppLanguage: String, CaseIterable, Codable, Identifiable {
     var title: String {
         switch self {
         case .zhHans:
-            "中文"
+            "zh"
         case .english:
-            "English"
+            "en"
         }
     }
 
     func text(_ key: LocalizedKey) -> String {
         switch (self, key) {
-        case (.zhHans, .api): "模型配置"
-        case (.english, .api): "Model Configuration"
+        case (.zhHans, .api): "模型"
+        case (.english, .api): "Model"
         case (.zhHans, .customEndpoint): "OpenAI 兼容"
         case (.english, .customEndpoint): "OpenAI Compatible"
-        case (.zhHans, .githubOAuth): "GitHub OAuth"
-        case (.english, .githubOAuth): "GitHub OAuth"
+        case (.zhHans, .githubOAuth): "GitHub 认证"
+        case (.english, .githubOAuth): "GitHub Auth"
         case (.zhHans, .endpointURL): "端点 URL"
         case (.english, .endpointURL): "Endpoint URL"
         case (.zhHans, .apiKey): "API"
@@ -32,7 +32,7 @@ enum AppLanguage: String, CaseIterable, Codable, Identifiable {
         case (.english, .requestAuthorization): "Authorize"
         case (.zhHans, .logout): "退出登录"
         case (.english, .logout): "Log Out"
-        case (.zhHans, .currentAccount): "当前账户"
+        case (.zhHans, .currentAccount): "当前账号"
         case (.english, .currentAccount): "Current Account"
         case (.zhHans, .notAuthorized): "未授权"
         case (.english, .notAuthorized): "Not authorized"
@@ -56,30 +56,30 @@ enum AppLanguage: String, CaseIterable, Codable, Identifiable {
         case (.english, .savePrompt): "Save Prompt"
         case (.zhHans, .hotkey): "快捷键"
         case (.english, .hotkey): "Hotkey"
+        case (.zhHans, .hotkeyAndPrompt): "快捷键和提示词"
+        case (.english, .hotkeyAndPrompt): "Hotkey and Prompt"
         case (.zhHans, .restoreControlX): "恢复 Ctrl + X"
         case (.english, .restoreControlX): "Reset to Ctrl + X"
         case (.zhHans, .saveHotkey): "保存快捷键"
         case (.english, .saveHotkey): "Save Hotkey"
         case (.zhHans, .statusBar): "状态栏"
         case (.english, .statusBar): "Status Bar"
-        case (.zhHans, .showStatusBarIcon): "显示顶部图标"
-        case (.english, .showStatusBarIcon): "ShowBarIcon"
+        case (.zhHans, .showStatusBarIcon): "顶部图标"
+        case (.english, .showStatusBarIcon): "Bar Icon"
         case (.zhHans, .permissions): "权限"
         case (.english, .permissions): "Permissions"
-        case (.zhHans, .checkAccessibility): "检查辅助功能"
-        case (.english, .checkAccessibility): "Check Accessibility"
+        case (.zhHans, .checkPermissions): "检查权限"
+        case (.english, .checkPermissions): "Check Permissions"
         case (.zhHans, .requestAccessibility): "请求辅助功能权限"
         case (.english, .requestAccessibility): "Request Accessibility"
-        case (.zhHans, .checkInputMonitoring): "检查输入监控"
-        case (.english, .checkInputMonitoring): "Check Input Monitoring"
-        case (.zhHans, .requestInputMonitoring): "请求监控权限"
-        case (.english, .requestInputMonitoring): "Request Monitoring Permission"
+        case (.zhHans, .requestInputMonitoring): "请求输入监控权限"
+        case (.english, .requestInputMonitoring): "Request Input Monitoring"
         case (.zhHans, .checkKeyboardPermissions): "检查键盘权限"
         case (.english, .checkKeyboardPermissions): "Check Keyboard Permissions"
         case (.zhHans, .restartHotkeyMonitor): "重启热键监听"
         case (.english, .restartHotkeyMonitor): "Restart Hotkey Monitor"
-        case (.zhHans, .showLogs): "显示日志"
-        case (.english, .showLogs): "Show Logs"
+        case (.zhHans, .showLogs): "日志"
+        case (.english, .showLogs): "Logs"
         case (.zhHans, .checkForUpdates): "检查更新"
         case (.english, .checkForUpdates): "Check for Updates"
         case (.zhHans, .logs): "日志"
@@ -97,11 +97,11 @@ enum AppLanguage: String, CaseIterable, Codable, Identifiable {
         case (.zhHans, .usage): "使用说明"
         case (.english, .usage): "Usage"
         case (.zhHans, .usageStepPermissionsAndModel): "1. 配置权限和模型"
-        case (.english, .usageStepPermissionsAndModel): "1. Configure permissions and model"
-        case (.zhHans, .usageStepPromptAndHotkey): "2. 配置提示词和快捷键"
-        case (.english, .usageStepPromptAndHotkey): "2. Configure prompt and hotkey"
+        case (.english, .usageStepPermissionsAndModel): "1. Permissions/model"
+        case (.zhHans, .usageStepPromptAndHotkey): "2. 配置快捷键和提示词"
+        case (.english, .usageStepPromptAndHotkey): "2. Hotkey/prompt"
         case (.zhHans, .usageStepRewrite): "3. 选中文字，按下快捷键改写"
-        case (.english, .usageStepRewrite): "3. Select text and press the hotkey to rewrite"
+        case (.english, .usageStepRewrite): "3. Select + rewrite"
         }
     }
 }
@@ -110,9 +110,9 @@ enum LocalizedKey {
     case api, customEndpoint, githubOAuth, endpointURL, apiKey, requestAuthorization, logout, currentAccount, notAuthorized
     case model, currentModel, unselected, loadModels, testModel, manualModelID, saveAPI
     case prompt, savePrompt
-    case hotkey, restoreControlX, saveHotkey
+    case hotkey, hotkeyAndPrompt, restoreControlX, saveHotkey
     case statusBar, showStatusBarIcon
-    case permissions, checkAccessibility, requestAccessibility, checkInputMonitoring, requestInputMonitoring
+    case permissions, checkPermissions, requestAccessibility, requestInputMonitoring
     case checkKeyboardPermissions, restartHotkeyMonitor
     case showLogs, checkForUpdates, logs, clear
     case language, otherFeatures, saveLanguage, saveAll
@@ -142,14 +142,20 @@ enum RewriteMode: String, CaseIterable, Codable, Identifiable {
 
     var id: String { rawValue }
 
-    var title: String {
-        switch self {
-        case .concise:
+    func title(language: AppLanguage) -> String {
+        switch (language, self) {
+        case (.zhHans, .concise):
             "简洁"
-        case .standard:
+        case (.english, .concise):
+            "Concise"
+        case (.zhHans, .standard):
             "常规"
-        case .custom:
+        case (.english, .standard):
+            "Standard"
+        case (.zhHans, .custom):
             "自定义"
+        case (.english, .custom):
+            "Custom"
         }
     }
 

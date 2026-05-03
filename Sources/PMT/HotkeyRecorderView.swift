@@ -40,21 +40,21 @@ final class RecorderField: NSControl {
     init() {
         super.init(frame: .zero)
         wantsLayer = true
-        layer?.cornerRadius = 8
+        layer?.cornerRadius = 6
         layer?.borderWidth = 1
         layer?.masksToBounds = false
 
         label.translatesAutoresizingMaskIntoConstraints = false
         label.alignment = .center
         label.lineBreakMode = .byTruncatingTail
-        label.font = .monospacedSystemFont(ofSize: 13, weight: .semibold)
+        label.font = .monospacedSystemFont(ofSize: 12, weight: .semibold)
         label.textColor = .labelColor
         label.allowsDefaultTighteningForTruncation = true
         addSubview(label)
 
         NSLayoutConstraint.activate([
-            label.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 12),
-            label.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -12),
+            label.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 8),
+            label.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -8),
             label.centerYAnchor.constraint(equalTo: centerYAnchor)
         ])
 
