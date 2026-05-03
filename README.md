@@ -1,6 +1,6 @@
 # PMT
 
-Version: `v0.0.11`
+Version: `v0.0.20`
 
 [中文说明](./README.zh-CN.md)
 
@@ -70,4 +70,4 @@ Custom gateways and local providers are supported as long as they expose compati
 
 ## Status
 
-`v0.0.11` delivers the core rewrite loop, split settings saves, model latency testing, built-in prompt presets, a collapsible log view, and Chinese/English interface switching.
+`v0.0.20` delivers the core rewrite loop, unified settings save, model latency testing, built-in prompt presets, a collapsible log view, Chinese/English interface switching, and the latest single-column settings layout.

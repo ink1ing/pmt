@@ -18,12 +18,16 @@ enum AppLanguage: String, CaseIterable, Codable, Identifiable {
 
     func text(_ key: LocalizedKey) -> String {
         switch (self, key) {
-        case (.zhHans, .api): "API"
-        case (.english, .api): "API"
+        case (.zhHans, .api): "模型配置"
+        case (.english, .api): "Model Configuration"
         case (.zhHans, .endpointURL): "端点 URL"
         case (.english, .endpointURL): "Endpoint URL"
+        case (.zhHans, .apiKey): "API"
+        case (.english, .apiKey): "API"
         case (.zhHans, .model): "模型"
         case (.english, .model): "Model"
+        case (.zhHans, .currentModel): "当前模型"
+        case (.english, .currentModel): "Current Model"
         case (.zhHans, .unselected): "未选择"
         case (.english, .unselected): "Not selected"
         case (.zhHans, .loadModels): "读取模型"
@@ -34,7 +38,7 @@ enum AppLanguage: String, CaseIterable, Codable, Identifiable {
         case (.english, .manualModelID): "Manual Model ID"
         case (.zhHans, .saveAPI): "保存 API"
         case (.english, .saveAPI): "Save API"
-        case (.zhHans, .prompt): "Prompt"
+        case (.zhHans, .prompt): "提示词"
         case (.english, .prompt): "Prompt"
         case (.zhHans, .savePrompt): "保存 Prompt"
         case (.english, .savePrompt): "Save Prompt"
@@ -72,19 +76,21 @@ enum AppLanguage: String, CaseIterable, Codable, Identifiable {
         case (.english, .language): "Language"
         case (.zhHans, .saveLanguage): "保存语言"
         case (.english, .saveLanguage): "Save Language"
+        case (.zhHans, .saveAll): "保存"
+        case (.english, .saveAll): "Save"
         }
     }
 }
 
 enum LocalizedKey {
-    case api, endpointURL, model, unselected, loadModels, testModel, manualModelID, saveAPI
+    case api, endpointURL, apiKey, model, currentModel, unselected, loadModels, testModel, manualModelID, saveAPI
     case prompt, savePrompt
     case hotkey, restoreControlX, saveHotkey
     case statusBar, showStatusBarIcon
     case permissions, checkAccessibility, requestAccessibility, checkInputMonitoring, requestInputMonitoring
     case checkKeyboardPermissions, restartHotkeyMonitor
     case showLogs, logs, clear
-    case language, saveLanguage
+    case language, saveLanguage, saveAll
 }
 
 enum RewriteMode: String, CaseIterable, Codable, Identifiable {

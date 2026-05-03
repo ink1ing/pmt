@@ -156,6 +156,21 @@ final class ConfigStore: ObservableObject {
         addLog(statusMessage)
     }
 
+    func saveAllSections() {
+        if let builtInPrompt = rewriteMode.builtInPrompt {
+            systemPrompt = builtInPrompt
+        }
+        saveConfig()
+        do {
+            try saveAPIKeyIfNeeded()
+            statusMessage = language == .zhHans ? "全部配置已保存" : "All settings saved"
+            addLog(statusMessage)
+        } catch {
+            statusMessage = error.localizedDescription
+            addLog(language == .zhHans ? "保存失败：\(error.localizedDescription)" : "Save failed: \(error.localizedDescription)")
+        }
+    }
+
     func addLog(_ message: String) {
         NSLog("PMT: %@", message)
         logs.append(LogEntry(message: message))

@@ -8,6 +8,8 @@ struct SettingsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
+            usageSection
+            Divider()
             apiSection
             Divider()
             promptSection
@@ -29,50 +31,55 @@ struct SettingsView: View {
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
+                Spacer()
+                Button(language.text(.saveAll)) {
+                    store.saveAllSections()
+                    onSave()
+                }
             }
         }
         .padding(18)
         .frame(width: 560)
     }
 
+    private var usageSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("使用说明")
+                .font(.headline)
+            Text("1. 授予必要的权限")
+            Text("2. 配置可用的模型")
+            Text("3. 配置全局快捷键和风格偏好")
+            Text("4. 在任意应用中选中文字，极速改写提示词")
+        }
+    }
+
     private var apiSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 12) {
             Text(language.text(.api))
                 .font(.headline)
             TextField(language.text(.endpointURL), text: $store.endpointURL)
                 .textFieldStyle(.roundedBorder)
-            SecureField("API Key", text: $store.apiKey)
+            SecureField(language.text(.apiKey), text: $store.apiKey)
                 .textFieldStyle(.roundedBorder)
-            HStack {
-                Picker(language.text(.model), selection: $store.selectedModel) {
-                    if store.selectedModel.isEmpty {
-                        Text(language.text(.unselected)).tag("")
-                    }
-                    ForEach(store.availableModels, id: \.self) { model in
-                        Text(model).tag(model)
-                    }
-                    if !store.selectedModel.isEmpty, !store.availableModels.contains(store.selectedModel) {
-                        Text(store.selectedModel).tag(store.selectedModel)
-                    }
+            Picker(language.text(.model), selection: $store.selectedModel) {
+                if store.selectedModel.isEmpty {
+                    Text(language.text(.unselected)).tag("")
                 }
-                .frame(maxWidth: .infinity)
-
+                ForEach(store.availableModels, id: \.self) { model in
+                    Text(model).tag(model)
+                }
+                if !store.selectedModel.isEmpty, !store.availableModels.contains(store.selectedModel) {
+                    Text(store.selectedModel).tag(store.selectedModel)
+                }
+            }
+            HStack {
                 Button(language.text(.loadModels)) {
-                    store.saveAPISection()
                     Task { await store.loadModels() }
                 }
                 Button(language.text(.testModel)) {
-                    store.saveAPISection()
                     Task { await store.testConnection() }
                 }
-            }
-            TextField(language.text(.manualModelID), text: $store.selectedModel)
-                .textFieldStyle(.roundedBorder)
-            HStack {
                 Spacer()
-                Button(language.text(.saveAPI)) {
-                    store.saveAPISection()
-                }
             }
         }
         .disabled(store.isBusy)
@@ -80,18 +87,15 @@ struct SettingsView: View {
 
     private var promptSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Text(language.text(.prompt))
-                    .font(.headline)
-                Spacer()
-                Picker("", selection: $store.rewriteMode) {
-                    ForEach(RewriteMode.allCases) { mode in
-                        Text(mode.title).tag(mode)
-                    }
+            Text(language.text(.prompt))
+                .font(.headline)
+            Picker("", selection: $store.rewriteMode) {
+                ForEach(RewriteMode.allCases) { mode in
+                    Text(mode.title).tag(mode)
                 }
-                .pickerStyle(.segmented)
-                .frame(width: 240)
             }
+            .pickerStyle(.segmented)
+            .frame(width: 240, alignment: .leading)
             if store.rewriteMode == .custom {
                 TextEditor(text: $store.systemPrompt)
                     .font(.system(.body, design: .monospaced))
@@ -100,12 +104,6 @@ struct SettingsView: View {
                         RoundedRectangle(cornerRadius: 6)
                             .stroke(Color.secondary.opacity(0.25))
                     )
-            }
-            HStack {
-                Spacer()
-                Button(language.text(.savePrompt)) {
-                    store.savePromptSection()
-                }
             }
         }
     }
@@ -117,13 +115,6 @@ struct SettingsView: View {
             HStack {
                 HotkeyRecorder(hotkey: $store.hotkey)
                     .frame(width: 180, height: 30)
-                Button(language.text(.restoreControlX)) {
-                    store.hotkey = .defaultControlX
-                }
-                Button(language.text(.saveHotkey)) {
-                    store.saveHotkeySection()
-                    onSave()
-                }
                 Spacer()
             }
         }
@@ -183,24 +174,15 @@ struct SettingsView: View {
 
     private var languageSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Text(language.text(.language))
-                    .font(.headline)
-                Spacer()
-                Picker("", selection: $store.language) {
-                    ForEach(AppLanguage.allCases) { language in
-                        Text(language.title).tag(language)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .frame(width: 180)
-            }
-            HStack {
-                Spacer()
-                Button(language.text(.saveLanguage)) {
-                    store.saveLanguageSection()
+            Text(language.text(.language))
+                .font(.headline)
+            Picker("", selection: $store.language) {
+                ForEach(AppLanguage.allCases) { language in
+                    Text(language.title).tag(language)
                 }
             }
+            .pickerStyle(.segmented)
+            .frame(width: 180, alignment: .leading)
         }
     }
 
