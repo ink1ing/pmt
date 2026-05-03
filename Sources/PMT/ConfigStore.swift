@@ -206,11 +206,15 @@ final class ConfigStore: ObservableObject {
         }
     }
 
+    private var activeSystemPrompt: String {
+        rewriteMode.builtInPrompt ?? systemPrompt
+    }
+
     func rewrite(text: String) async throws -> String {
         try await modelClient().rewrite(
             text: text,
             model: selectedModel,
-            systemPrompt: systemPrompt,
+            systemPrompt: activeSystemPrompt,
             mode: rewriteMode
         )
     }
@@ -304,7 +308,7 @@ final class ConfigStore: ObservableObject {
 
             let elapsed = try await modelClient().testModelLatency(
                 model: selectedModel,
-                systemPrompt: systemPrompt,
+                systemPrompt: activeSystemPrompt,
                 mode: rewriteMode
             )
             let formatted = String(format: "%.2f", elapsed)

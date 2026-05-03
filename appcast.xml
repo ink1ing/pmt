@@ -3,18 +3,18 @@
     <channel>
         <title>PMT</title>
         <item>
-            <title>0.0.44</title>
-            <pubDate>Mon, 04 May 2026 01:50:45 +0800</pubDate>
+            <title>0.0.45</title>
+            <pubDate>Mon, 04 May 2026 02:03:56 +0800</pubDate>
             <link>https://github.com/ink1ing/pmt</link>
-            <sparkle:version>44</sparkle:version>
-            <sparkle:shortVersionString>0.0.44</sparkle:shortVersionString>
+            <sparkle:version>45</sparkle:version>
+            <sparkle:shortVersionString>0.0.45</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-            <description sparkle:format="markdown"><![CDATA[# PMT 0.0.44
+            <description sparkle:format="markdown"><![CDATA[# PMT 0.0.45
 
 See the GitHub release notes for this version.
 ]]></description>
-            <enclosure url="https://github.com/ink1ing/pmt/releases/download/v0.0.44/PMT-0.0.44.zip" length="1359855" type="application/octet-stream" sparkle:edSignature="pqNTDbB67Iw5sta37aqewM45xN2i8kDasj/mrAx7/bE1+StmzNY/ISmGRDqrEl86IlP5AnLiTMeYQo21PDe7DQ=="/>
+            <enclosure url="https://github.com/ink1ing/pmt/releases/download/v0.0.45/PMT-0.0.45.zip" length="1361894" type="application/octet-stream" sparkle:edSignature="gnEuwK/McWggrOf/YOWrAwv2TBpjHIu5CIGyKGAoa9/HI2LGrkdjtvBwg80+OAAjTSv0w9bMSqNrG3MIDq1PAw=="/>
         </item>
     </channel>
 </rss>

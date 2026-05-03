@@ -156,6 +156,11 @@ struct SettingsView: View {
                 .frame(width: controlWidth)
             }
             .frame(maxWidth: .infinity, alignment: .trailing)
+            .onChange(of: store.rewriteMode) {
+                if store.rewriteMode == .custom {
+                    store.systemPrompt = ""
+                }
+            }
             if store.rewriteMode == .custom {
                 TextEditor(text: $store.systemPrompt)
                     .font(.system(.body, design: .monospaced))
