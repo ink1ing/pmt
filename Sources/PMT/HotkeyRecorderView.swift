@@ -18,19 +18,47 @@ struct HotkeyRecorder: NSViewRepresentable {
     }
 }
 
-final class RecorderField: NSTextField {
+final class RecorderField: NSControl {
     var onChange: ((HotkeyConfig) -> Void)?
     private var pendingFirstKey: (keyCode: UInt16, carbonModifiers: UInt32)?
+    private var committedDisplayValue = ""
+    private let label = NSTextField(labelWithString: "")
+    private var isRecording = false {
+        didSet { updateAppearance() }
+    }
+
+    override var stringValue: String {
+        get { label.stringValue }
+        set {
+            label.stringValue = newValue
+            if committedDisplayValue.isEmpty, !newValue.isEmpty {
+                committedDisplayValue = newValue
+            }
+        }
+    }
 
     init() {
         super.init(frame: .zero)
-        isEditable = false
-        isSelectable = false
-        isBordered = true
-        drawsBackground = true
-        alignment = .center
-        focusRingType = .default
-        placeholderString = "点击后按两个键"
+        wantsLayer = true
+        layer?.cornerRadius = 8
+        layer?.borderWidth = 1
+        layer?.masksToBounds = false
+
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.alignment = .center
+        label.lineBreakMode = .byTruncatingTail
+        label.font = .monospacedSystemFont(ofSize: 13, weight: .semibold)
+        label.textColor = .labelColor
+        label.allowsDefaultTighteningForTruncation = true
+        addSubview(label)
+
+        NSLayoutConstraint.activate([
+            label.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 12),
+            label.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -12),
+            label.centerYAnchor.constraint(equalTo: centerYAnchor)
+        ])
+
+        updateAppearance()
     }
 
     required init?(coder: NSCoder) {
@@ -42,7 +70,9 @@ final class RecorderField: NSTextField {
     override func mouseDown(with event: NSEvent) {
         window?.makeFirstResponder(self)
         pendingFirstKey = nil
+        committedDisplayValue = stringValue
         stringValue = "按下第一个键"
+        isRecording = true
     }
 
     override func keyDown(with event: NSEvent) {
@@ -63,8 +93,10 @@ final class RecorderField: NSTextField {
                 displayName: display
             )
             stringValue = display
+            committedDisplayValue = display
             pendingFirstKey = nil
             onChange?(config)
+            isRecording = false
             window?.makeFirstResponder(nil)
             return
         }
@@ -76,6 +108,29 @@ final class RecorderField: NSTextField {
             secondaryKeyCode: nil
         )
         stringValue = display
+    }
+
+    override func resignFirstResponder() -> Bool {
+        isRecording = false
+        if pendingFirstKey != nil {
+            pendingFirstKey = nil
+            stringValue = committedDisplayValue
+        }
+        return super.resignFirstResponder()
+    }
+
+    override func resetCursorRects() {
+        addCursorRect(bounds, cursor: .pointingHand)
+    }
+
+    private func updateAppearance() {
+        layer?.backgroundColor = NSColor.controlBackgroundColor.withAlphaComponent(isRecording ? 1.0 : 0.78).cgColor
+        layer?.borderColor = (isRecording ? NSColor.controlAccentColor : NSColor.separatorColor).cgColor
+        layer?.shadowColor = NSColor.black.cgColor
+        layer?.shadowOpacity = isRecording ? 0.14 : 0.05
+        layer?.shadowRadius = isRecording ? 5 : 2
+        layer?.shadowOffset = CGSize(width: 0, height: 1)
+        label.textColor = isRecording ? .controlAccentColor : .labelColor
     }
 }
 

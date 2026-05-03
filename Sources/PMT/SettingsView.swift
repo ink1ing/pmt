@@ -5,6 +5,11 @@ struct SettingsView: View {
     let onSave: () -> Void
 
     private var language: AppLanguage { store.language }
+    private let controlWidth: CGFloat = 240
+    private let hotkeyControlWidth: CGFloat = 60
+    private let modelColumnWidth: CGFloat = 240
+    @State private var showUsage = false
+    @State private var showOtherFeatures = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -16,21 +21,10 @@ struct SettingsView: View {
             Divider()
             hotkeySection
             Divider()
-            statusBarSection
-            Divider()
             permissionsSection
             Divider()
-            logToggleSection
-            if store.showLogs {
-                logSection
-            }
-            Divider()
-            languageSection
-            HStack {
-                Text(store.statusMessage)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
+            HStack(alignment: .bottom) {
+                otherFeaturesSection
                 Spacer()
                 Button(language.text(.saveAll)) {
                     store.saveAllSections()
@@ -43,25 +37,91 @@ struct SettingsView: View {
     }
 
     private var usageSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("使用说明")
-                .font(.headline)
-            Text("1. 授予必要的权限")
-            Text("2. 配置可用的模型")
-            Text("3. 配置全局快捷键和风格偏好")
-            Text("4. 在任意应用中选中文字，极速改写提示词")
+        DisclosureGroup(isExpanded: $showUsage) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text(language.text(.usageStepPermissionsAndModel))
+                Text(language.text(.usageStepPromptAndHotkey))
+                Text(language.text(.usageStepRewrite))
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        } label: {
+            HStack {
+                Text(language.text(.usage))
+                    .font(.headline)
+                Spacer(minLength: 12)
+                Text(store.statusMessage)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
         }
     }
 
     private var apiSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(language.text(.api))
-                .font(.headline)
-            TextField(language.text(.endpointURL), text: $store.endpointURL)
+            HStack {
+                Text(language.text(.api))
+                    .font(.headline)
+                Spacer(minLength: 12)
+                Picker("", selection: $store.modelProvider) {
+                    ForEach(ModelProvider.allCases) { provider in
+                        Text(provider.title(language: language)).tag(provider)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .frame(width: controlWidth)
+            }
+            HStack(alignment: .top, spacing: 16) {
+                modelProviderLeftColumn
+                .frame(maxWidth: .infinity)
+
+                modelPickerColumn
+            }
+        }
+        .disabled(store.isBusy)
+    }
+
+    @ViewBuilder
+    private var modelProviderLeftColumn: some View {
+        if store.modelProvider == .customEndpoint {
+            VStack(alignment: .leading, spacing: 10) {
+                TextField(language.text(.endpointURL), text: $store.endpointURL)
+                    .textFieldStyle(.roundedBorder)
+                SecureField(language.text(.apiKey), text: $store.apiKey)
+                    .textFieldStyle(.roundedBorder)
+            }
+        } else {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(spacing: 8) {
+                    Button(language.text(.requestAuthorization)) {
+                        Task { await store.authorizeGitHubCopilot() }
+                    }
+                    .disabled(hasGitHubAccount)
+
+                    Button(language.text(.logout)) {
+                        store.logoutGitHubCopilot()
+                    }
+                    .disabled(!hasGitHubAccount)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                TextField(
+                    language.text(.currentAccount),
+                    text: .constant(store.githubAccountLogin.isEmpty ? language.text(.notAuthorized) : store.githubAccountLogin)
+                )
                 .textFieldStyle(.roundedBorder)
-            SecureField(language.text(.apiKey), text: $store.apiKey)
-                .textFieldStyle(.roundedBorder)
-            Picker(language.text(.model), selection: $store.selectedModel) {
+                .disabled(true)
+            }
+        }
+    }
+
+    private var hasGitHubAccount: Bool {
+        !store.githubAccountLogin.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    private var modelPickerColumn: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Picker(language.text(.currentModel), selection: $store.selectedModel) {
                 if store.selectedModel.isEmpty {
                     Text(language.text(.unselected)).tag("")
                 }
@@ -72,30 +132,34 @@ struct SettingsView: View {
                     Text(store.selectedModel).tag(store.selectedModel)
                 }
             }
+            .frame(width: modelColumnWidth, alignment: .trailing)
             HStack {
+                Spacer(minLength: 0)
                 Button(language.text(.loadModels)) {
                     Task { await store.loadModels() }
                 }
                 Button(language.text(.testModel)) {
                     Task { await store.testConnection() }
                 }
-                Spacer()
             }
         }
-        .disabled(store.isBusy)
+        .frame(width: modelColumnWidth, alignment: .trailing)
     }
 
     private var promptSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text(language.text(.prompt))
-                .font(.headline)
-            Picker("", selection: $store.rewriteMode) {
-                ForEach(RewriteMode.allCases) { mode in
-                    Text(mode.title).tag(mode)
+            HStack {
+                Text(language.text(.prompt))
+                    .font(.headline)
+                Spacer(minLength: 12)
+                Picker("", selection: $store.rewriteMode) {
+                    ForEach(RewriteMode.allCases) { mode in
+                        Text(mode.title).tag(mode)
+                    }
                 }
+                .pickerStyle(.segmented)
+                .frame(width: controlWidth)
             }
-            .pickerStyle(.segmented)
-            .frame(width: 240, alignment: .leading)
             if store.rewriteMode == .custom {
                 TextEditor(text: $store.systemPrompt)
                     .font(.system(.body, design: .monospaced))
@@ -110,79 +174,41 @@ struct SettingsView: View {
 
     private var hotkeySection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text(language.text(.hotkey))
-                .font(.headline)
             HStack {
+                Text(language.text(.hotkey))
+                    .font(.headline)
+                Spacer(minLength: 12)
                 HotkeyRecorder(hotkey: $store.hotkey)
-                    .frame(width: 180, height: 30)
-                Spacer()
+                    .frame(width: hotkeyControlWidth, height: 34)
             }
-        }
-    }
-
-    private var statusBarSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text(language.text(.statusBar))
-                .font(.headline)
-            Toggle(language.text(.showStatusBarIcon), isOn: $store.statusBarIconEnabled)
-                .toggleStyle(.checkbox)
         }
     }
 
     private var permissionsSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        HStack(alignment: .center, spacing: 8) {
             Text(language.text(.permissions))
                 .font(.headline)
-            HStack {
-                Button(language.text(.checkAccessibility)) {
-                    let message = PermissionManager.accessibilityStatus(language: language)
-                    store.statusMessage = message
-                    store.addLog(message)
-                }
-                Button(language.text(.requestAccessibility)) {
-                    let message = PermissionManager.requestAccessibilityAccess(language: language)
-                    store.statusMessage = message
-                    store.addLog(message)
-                }
+            Spacer(minLength: 8)
+            Button(language.text(.checkAccessibility)) {
+                let message = PermissionManager.accessibilityStatus(language: language)
+                store.statusMessage = message
+                store.addLog(message)
             }
-            HStack {
-                Button(language.text(.checkInputMonitoring)) {
-                    let message = PermissionManager.inputMonitoringStatus(language: language)
-                    store.statusMessage = message
-                    store.addLog(message)
-                }
-                Button(language.text(.requestInputMonitoring)) {
-                    let message = PermissionManager.requestInputMonitoringAccess(language: language)
-                    store.statusMessage = message
-                    store.addLog(message)
-                }
+            Button(language.text(.requestAccessibility)) {
+                let message = PermissionManager.requestAccessibilityAccess(language: language)
+                store.statusMessage = message
+                store.addLog(message)
             }
-            HStack {
-                Button(language.text(.checkKeyboardPermissions)) {
-                    let message = PermissionManager.keyboardPermissionSummary(language: language)
-                    store.statusMessage = message
-                    store.addLog(message)
-                }
-                Button(language.text(.restartHotkeyMonitor)) {
-                    store.addLog(language == .zhHans ? "手动重启热键监听" : "Hotkey monitor restarted manually")
-                    store.saveConfig()
-                    onSave()
-                }
+            Button(language.text(.checkInputMonitoring)) {
+                let message = PermissionManager.inputMonitoringStatus(language: language)
+                store.statusMessage = message
+                store.addLog(message)
             }
-        }
-    }
-
-    private var languageSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text(language.text(.language))
-                .font(.headline)
-            Picker("", selection: $store.language) {
-                ForEach(AppLanguage.allCases) { language in
-                    Text(language.title).tag(language)
-                }
+            Button(language.text(.requestInputMonitoring)) {
+                let message = PermissionManager.requestInputMonitoringAccess(language: language)
+                store.statusMessage = message
+                store.addLog(message)
             }
-            .pickerStyle(.segmented)
-            .frame(width: 180, alignment: .leading)
         }
     }
 
@@ -225,10 +251,38 @@ struct SettingsView: View {
         }
     }
 
-    private var logToggleSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Toggle(language.text(.showLogs), isOn: $store.showLogs)
-                .toggleStyle(.checkbox)
+    private var otherFeaturesSection: some View {
+        DisclosureGroup(isExpanded: $showOtherFeatures) {
+            VStack(alignment: .leading, spacing: 16) {
+                HStack(alignment: .center, spacing: 0) {
+                    Toggle(language.text(.showStatusBarIcon), isOn: $store.statusBarIconEnabled)
+                        .toggleStyle(.checkbox)
+                    Spacer()
+                        .frame(width: 16)
+                    Toggle(language.text(.showLogs), isOn: $store.showLogs)
+                        .toggleStyle(.checkbox)
+                    Picker("", selection: $store.language) {
+                        ForEach(AppLanguage.allCases) { language in
+                            Text(language.title).tag(language)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .frame(width: 180)
+                    Button(language.text(.checkForUpdates)) {
+                        store.addLog(language == .zhHans ? "手动检查更新" : "Checking for updates manually")
+                        UpdateManager.shared.checkForUpdates()
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                if store.showLogs {
+                    Divider()
+                    logSection
+                }
+            }
+            .fixedSize(horizontal: true, vertical: false)
+        } label: {
+            Text(language.text(.otherFeatures))
+                .font(.headline)
         }
     }
 }

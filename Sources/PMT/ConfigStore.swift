@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 
 struct LogEntry: Identifiable, Codable {
@@ -14,8 +15,11 @@ struct LogEntry: Identifiable, Codable {
 
 @MainActor
 final class ConfigStore: ObservableObject {
+    @Published var modelProvider: ModelProvider
     @Published var endpointURL: String
     @Published var apiKey: String
+    @Published var githubOAuthToken: String
+    @Published var githubAccountLogin: String
     @Published var selectedModel: String
     @Published var systemPrompt: String
     @Published var rewriteMode: RewriteMode
@@ -32,7 +36,6 @@ final class ConfigStore: ObservableObject {
     private let logsKey = "PMT.logs"
     private let defaults: UserDefaults
     private let maxLogCount = 120
-    private var lastSavedAPIKey: String
 
     private static let configSuiteName = "dev.pmt.PMT.shared"
     private static let legacyConfigSuiteName = "dev.pmt.PMT"
@@ -40,7 +43,6 @@ final class ConfigStore: ObservableObject {
     init() {
         defaults = UserDefaults(suiteName: Self.configSuiteName) ?? .standard
         let legacyDefaults = UserDefaults(suiteName: Self.legacyConfigSuiteName)
-        let currentAPIKey = KeychainStore.readAPIKey()
 
         let config: AppConfig
         if let data = defaults.data(forKey: defaultsKey),
@@ -58,9 +60,11 @@ final class ConfigStore: ObservableObject {
             config = .defaults
         }
 
+        modelProvider = config.modelProvider
         endpointURL = config.endpointURL
-        apiKey = currentAPIKey
-        lastSavedAPIKey = currentAPIKey
+        apiKey = config.apiKey
+        githubOAuthToken = config.githubOAuthToken
+        githubAccountLogin = config.githubAccountLogin
         selectedModel = config.selectedModel
         systemPrompt = config.systemPrompt
         rewriteMode = config.rewriteMode
@@ -97,7 +101,11 @@ final class ConfigStore: ObservableObject {
 
     var config: AppConfig {
         AppConfig(
+            modelProvider: modelProvider,
             endpointURL: endpointURL,
+            apiKey: apiKey,
+            githubOAuthToken: githubOAuthToken,
+            githubAccountLogin: githubAccountLogin,
             selectedModel: selectedModel,
             systemPrompt: systemPrompt,
             rewriteMode: rewriteMode,
@@ -115,24 +123,10 @@ final class ConfigStore: ObservableObject {
         addLog("配置已保存")
     }
 
-    func saveAPIKeyIfNeeded() throws {
-        guard apiKey != lastSavedAPIKey else {
-            return
-        }
-        try KeychainStore.saveAPIKey(apiKey)
-        lastSavedAPIKey = apiKey
-    }
-
     func saveAPISection() {
         saveConfig()
-        do {
-            try saveAPIKeyIfNeeded()
-            statusMessage = language == .zhHans ? "API 配置已保存" : "API settings saved"
-            addLog(statusMessage)
-        } catch {
-            statusMessage = error.localizedDescription
-            addLog(language == .zhHans ? "API 配置保存失败：\(error.localizedDescription)" : "API settings save failed: \(error.localizedDescription)")
-        }
+        statusMessage = language == .zhHans ? "API 配置已保存" : "API settings saved"
+        addLog(statusMessage)
     }
 
     func savePromptSection() {
@@ -161,14 +155,8 @@ final class ConfigStore: ObservableObject {
             systemPrompt = builtInPrompt
         }
         saveConfig()
-        do {
-            try saveAPIKeyIfNeeded()
-            statusMessage = language == .zhHans ? "全部配置已保存" : "All settings saved"
-            addLog(statusMessage)
-        } catch {
-            statusMessage = error.localizedDescription
-            addLog(language == .zhHans ? "保存失败：\(error.localizedDescription)" : "Save failed: \(error.localizedDescription)")
-        }
+        statusMessage = language == .zhHans ? "全部配置已保存" : "All settings saved"
+        addLog(statusMessage)
     }
 
     func addLog(_ message: String) {
@@ -206,6 +194,81 @@ final class ConfigStore: ObservableObject {
         return try OpenAICompatibleClient(endpointURL: endpointURL, apiKey: apiKey)
     }
 
+    func modelClient() throws -> PromptModelClient {
+        switch modelProvider {
+        case .customEndpoint:
+            return try apiClient()
+        case .githubOAuth:
+            guard !githubOAuthToken.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                throw PMTError.api(language == .zhHans ? "请先完成 GitHub OAuth 授权。" : "Authorize GitHub OAuth first.")
+            }
+            return GitHubCopilotClient(accessToken: githubOAuthToken)
+        }
+    }
+
+    func rewrite(text: String) async throws -> String {
+        try await modelClient().rewrite(
+            text: text,
+            model: selectedModel,
+            systemPrompt: systemPrompt,
+            mode: rewriteMode
+        )
+    }
+
+    func authorizeGitHubCopilot() async {
+        guard githubAccountLogin.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            statusMessage = language == .zhHans ? "当前已登录 GitHub 账号" : "GitHub account is already signed in"
+            addLog(statusMessage)
+            return
+        }
+
+        isBusy = true
+        statusMessage = language == .zhHans ? "正在请求 GitHub 授权..." : "Requesting GitHub authorization..."
+        addLog(language == .zhHans ? "开始 GitHub OAuth 授权" : "Starting GitHub OAuth authorization")
+        defer { isBusy = false }
+
+        do {
+            let session = try await GitHubCopilotClient.startDeviceFlow()
+            statusMessage = language == .zhHans
+                ? "请在 GitHub 页面完成授权，验证码：\(session.userCode)"
+                : "Complete GitHub authorization. Code: \(session.userCode)"
+            addLog(language == .zhHans ? "已打开 GitHub 授权页面，验证码：\(session.userCode)" : "Opened GitHub authorization page. Code: \(session.userCode)")
+            NSWorkspace.shared.open(session.verificationURL)
+
+            let account = try await GitHubCopilotClient.pollAuthorization(session: session)
+            githubOAuthToken = account.accessToken
+            githubAccountLogin = account.login
+            modelProvider = .githubOAuth
+            saveConfig()
+            statusMessage = language == .zhHans ? "GitHub 已授权：\(account.login)" : "GitHub authorized: \(account.login)"
+            addLog(statusMessage)
+        } catch {
+            statusMessage = error.localizedDescription
+            addLog(language == .zhHans ? "GitHub 授权失败：\(error.localizedDescription)" : "GitHub authorization failed: \(error.localizedDescription)")
+            Notifier.shared.error(error.localizedDescription)
+        }
+    }
+
+    func logoutGitHubCopilot() {
+        guard !githubAccountLogin.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
+              !githubOAuthToken.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            statusMessage = language == .zhHans ? "当前没有 GitHub 登录账号" : "No GitHub account is signed in"
+            addLog(statusMessage)
+            return
+        }
+
+        let previousAccount = githubAccountLogin
+        githubOAuthToken = ""
+        githubAccountLogin = ""
+        if modelProvider == .githubOAuth {
+            availableModels = []
+            selectedModel = ""
+        }
+        saveConfig()
+        statusMessage = language == .zhHans ? "已退出 GitHub：\(previousAccount)" : "GitHub signed out: \(previousAccount)"
+        addLog(statusMessage)
+    }
+
     func loadModels() async {
         isBusy = true
         statusMessage = language == .zhHans ? "读取模型中..." : "Loading models..."
@@ -213,7 +276,7 @@ final class ConfigStore: ObservableObject {
         defer { isBusy = false }
 
         do {
-            let models = try await apiClient().listModels()
+            let models = try await modelClient().listModels()
             availableModels = models
             if selectedModel.isEmpty, let first = models.first {
                 selectedModel = first
@@ -239,7 +302,7 @@ final class ConfigStore: ObservableObject {
                 throw PMTError.missingModel
             }
 
-            let elapsed = try await apiClient().testModelLatency(
+            let elapsed = try await modelClient().testModelLatency(
                 model: selectedModel,
                 systemPrompt: systemPrompt,
                 mode: rewriteMode

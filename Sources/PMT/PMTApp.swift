@@ -9,6 +9,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var rewriter: SelectionRewriter?
     private var hotkeyMonitor: GlobalHotkeyMonitor?
     private var frontmostAppTracker: FrontmostAppTracker?
+    private let updateManager = UpdateManager.shared
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         if Bundle.main.bundleURL.pathExtension == "app" {
@@ -59,6 +60,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let menu = NSMenu()
         menu.addItem(NSMenuItem(title: "设置", action: #selector(openSettings), keyEquivalent: ","))
         menu.addItem(NSMenuItem(title: "立即改写选中文本", action: #selector(rewriteNow), keyEquivalent: "r"))
+        menu.addItem(NSMenuItem(title: "检查更新", action: #selector(checkForUpdates), keyEquivalent: "u"))
         menu.addItem(.separator())
         menu.addItem(NSMenuItem(title: "退出", action: #selector(quit), keyEquivalent: "q"))
         item.menu = menu
@@ -73,6 +75,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let targetApplication = frontmostAppTracker?.lastExternalApplication
         store.addLog("通过状态栏菜单触发改写，目标：\(FrontmostAppTracker.displayName(for: targetApplication))")
         rewriter?.rewriteSelection(targetApplication: targetApplication)
+    }
+
+    @objc private func checkForUpdates() {
+        store.addLog("通过状态栏菜单检查更新")
+        updateManager.checkForUpdates()
     }
 
     @objc private func quit() {

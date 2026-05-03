@@ -20,10 +20,22 @@ enum AppLanguage: String, CaseIterable, Codable, Identifiable {
         switch (self, key) {
         case (.zhHans, .api): "模型配置"
         case (.english, .api): "Model Configuration"
+        case (.zhHans, .customEndpoint): "OpenAI 兼容"
+        case (.english, .customEndpoint): "OpenAI Compatible"
+        case (.zhHans, .githubOAuth): "GitHub OAuth"
+        case (.english, .githubOAuth): "GitHub OAuth"
         case (.zhHans, .endpointURL): "端点 URL"
         case (.english, .endpointURL): "Endpoint URL"
         case (.zhHans, .apiKey): "API"
         case (.english, .apiKey): "API"
+        case (.zhHans, .requestAuthorization): "请求授权"
+        case (.english, .requestAuthorization): "Authorize"
+        case (.zhHans, .logout): "退出登录"
+        case (.english, .logout): "Log Out"
+        case (.zhHans, .currentAccount): "当前账户"
+        case (.english, .currentAccount): "Current Account"
+        case (.zhHans, .notAuthorized): "未授权"
+        case (.english, .notAuthorized): "Not authorized"
         case (.zhHans, .model): "模型"
         case (.english, .model): "Model"
         case (.zhHans, .currentModel): "当前模型"
@@ -50,8 +62,8 @@ enum AppLanguage: String, CaseIterable, Codable, Identifiable {
         case (.english, .saveHotkey): "Save Hotkey"
         case (.zhHans, .statusBar): "状态栏"
         case (.english, .statusBar): "Status Bar"
-        case (.zhHans, .showStatusBarIcon): "显示顶部状态栏图标"
-        case (.english, .showStatusBarIcon): "Show status bar icon"
+        case (.zhHans, .showStatusBarIcon): "显示顶部图标"
+        case (.english, .showStatusBarIcon): "ShowBarIcon"
         case (.zhHans, .permissions): "权限"
         case (.english, .permissions): "Permissions"
         case (.zhHans, .checkAccessibility): "检查辅助功能"
@@ -68,29 +80,59 @@ enum AppLanguage: String, CaseIterable, Codable, Identifiable {
         case (.english, .restartHotkeyMonitor): "Restart Hotkey Monitor"
         case (.zhHans, .showLogs): "显示日志"
         case (.english, .showLogs): "Show Logs"
+        case (.zhHans, .checkForUpdates): "检查更新"
+        case (.english, .checkForUpdates): "Check for Updates"
         case (.zhHans, .logs): "日志"
         case (.english, .logs): "Logs"
         case (.zhHans, .clear): "清空"
         case (.english, .clear): "Clear"
         case (.zhHans, .language): "语言"
         case (.english, .language): "Language"
+        case (.zhHans, .otherFeatures): "其他功能"
+        case (.english, .otherFeatures): "Other Features"
         case (.zhHans, .saveLanguage): "保存语言"
         case (.english, .saveLanguage): "Save Language"
         case (.zhHans, .saveAll): "保存"
         case (.english, .saveAll): "Save"
+        case (.zhHans, .usage): "使用说明"
+        case (.english, .usage): "Usage"
+        case (.zhHans, .usageStepPermissionsAndModel): "1. 配置权限和模型"
+        case (.english, .usageStepPermissionsAndModel): "1. Configure permissions and model"
+        case (.zhHans, .usageStepPromptAndHotkey): "2. 配置提示词和快捷键"
+        case (.english, .usageStepPromptAndHotkey): "2. Configure prompt and hotkey"
+        case (.zhHans, .usageStepRewrite): "3. 选中文字，按下快捷键改写"
+        case (.english, .usageStepRewrite): "3. Select text and press the hotkey to rewrite"
         }
     }
 }
 
 enum LocalizedKey {
-    case api, endpointURL, apiKey, model, currentModel, unselected, loadModels, testModel, manualModelID, saveAPI
+    case api, customEndpoint, githubOAuth, endpointURL, apiKey, requestAuthorization, logout, currentAccount, notAuthorized
+    case model, currentModel, unselected, loadModels, testModel, manualModelID, saveAPI
     case prompt, savePrompt
     case hotkey, restoreControlX, saveHotkey
     case statusBar, showStatusBarIcon
     case permissions, checkAccessibility, requestAccessibility, checkInputMonitoring, requestInputMonitoring
     case checkKeyboardPermissions, restartHotkeyMonitor
-    case showLogs, logs, clear
-    case language, saveLanguage, saveAll
+    case showLogs, checkForUpdates, logs, clear
+    case language, otherFeatures, saveLanguage, saveAll
+    case usage, usageStepPermissionsAndModel, usageStepPromptAndHotkey, usageStepRewrite
+}
+
+enum ModelProvider: String, CaseIterable, Codable, Identifiable {
+    case customEndpoint
+    case githubOAuth
+
+    var id: String { rawValue }
+
+    func title(language: AppLanguage) -> String {
+        switch self {
+        case .customEndpoint:
+            language.text(.customEndpoint)
+        case .githubOAuth:
+            language.text(.githubOAuth)
+        }
+    }
 }
 
 enum RewriteMode: String, CaseIterable, Codable, Identifiable {
@@ -308,7 +350,11 @@ struct HotkeyConfig: Codable, Equatable {
 }
 
 struct AppConfig: Codable {
+    var modelProvider: ModelProvider
     var endpointURL: String
+    var apiKey: String
+    var githubOAuthToken: String
+    var githubAccountLogin: String
     var selectedModel: String
     var systemPrompt: String
     var rewriteMode: RewriteMode
@@ -317,7 +363,11 @@ struct AppConfig: Codable {
     var language: AppLanguage
 
     enum CodingKeys: String, CodingKey {
+        case modelProvider
         case endpointURL
+        case apiKey
+        case githubOAuthToken
+        case githubAccountLogin
         case selectedModel
         case systemPrompt
         case rewriteMode
@@ -327,7 +377,11 @@ struct AppConfig: Codable {
     }
 
     init(
+        modelProvider: ModelProvider,
         endpointURL: String,
+        apiKey: String,
+        githubOAuthToken: String,
+        githubAccountLogin: String,
         selectedModel: String,
         systemPrompt: String,
         rewriteMode: RewriteMode,
@@ -335,7 +389,11 @@ struct AppConfig: Codable {
         statusBarIconEnabled: Bool,
         language: AppLanguage
     ) {
+        self.modelProvider = modelProvider
         self.endpointURL = endpointURL
+        self.apiKey = apiKey
+        self.githubOAuthToken = githubOAuthToken
+        self.githubAccountLogin = githubAccountLogin
         self.selectedModel = selectedModel
         self.systemPrompt = systemPrompt
         self.rewriteMode = rewriteMode
@@ -346,7 +404,11 @@ struct AppConfig: Codable {
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
+        modelProvider = try container.decodeIfPresent(ModelProvider.self, forKey: .modelProvider) ?? .customEndpoint
         endpointURL = try container.decode(String.self, forKey: .endpointURL)
+        apiKey = try container.decodeIfPresent(String.self, forKey: .apiKey) ?? ""
+        githubOAuthToken = try container.decodeIfPresent(String.self, forKey: .githubOAuthToken) ?? ""
+        githubAccountLogin = try container.decodeIfPresent(String.self, forKey: .githubAccountLogin) ?? ""
         selectedModel = try container.decode(String.self, forKey: .selectedModel)
         systemPrompt = try container.decode(String.self, forKey: .systemPrompt)
         rewriteMode = try container.decode(RewriteMode.self, forKey: .rewriteMode)
@@ -356,7 +418,11 @@ struct AppConfig: Codable {
     }
 
     static let defaults = AppConfig(
+        modelProvider: .customEndpoint,
         endpointURL: "https://api.openai.com/v1",
+        apiKey: "",
+        githubOAuthToken: "",
+        githubAccountLogin: "",
         selectedModel: "",
         systemPrompt: RewriteMode.standard.builtInPrompt ?? "",
         rewriteMode: .standard,

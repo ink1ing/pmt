@@ -34,14 +34,8 @@ final class SelectionRewriter {
                 try await activateTargetApplication(targetApplication)
                 let selectedText = try await copySelectedText()
                 store.addLog("读取选中文本成功：\(selectedText.count) 个字符")
-                let client = try store.apiClient()
                 store.addLog("开始请求模型：\(store.selectedModel.isEmpty ? "未选择模型" : store.selectedModel)")
-                let rewritten = try await client.rewrite(
-                    text: selectedText,
-                    model: store.selectedModel,
-                    systemPrompt: store.systemPrompt,
-                    mode: store.rewriteMode
-                )
+                let rewritten = try await store.rewrite(text: selectedText)
                 store.addLog("模型返回成功：\(rewritten.count) 个字符")
                 try await activateTargetApplication(targetApplication)
                 try paste(rewritten)

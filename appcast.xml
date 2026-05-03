@@ -1,0 +1,20 @@
+<?xml version="1.0" standalone="yes"?>
+<rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
+    <channel>
+        <title>PMT</title>
+        <item>
+            <title>0.0.33</title>
+            <pubDate>Mon, 04 May 2026 00:51:09 +0800</pubDate>
+            <link>https://github.com/ink1ing/pmt</link>
+            <sparkle:version>33</sparkle:version>
+            <sparkle:shortVersionString>0.0.33</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <description sparkle:format="markdown"><![CDATA[# PMT 0.0.33
+
+See the GitHub release notes for this version.
+]]></description>
+            <enclosure url="https://github.com/ink1ing/pmt/releases/download/v0.0.33/PMT-0.0.33.zip" length="1354729" type="application/octet-stream" sparkle:edSignature="FXSInUGlm6/Y6UMxdT6a/f/5FN4vlPuOYSFvjtR4ZDNIsG8d0L3CsbjKphAGoC3YKWP47ymm8JejoNJREWE8Bg=="/>
+        </item>
+    </channel>
+</rss>

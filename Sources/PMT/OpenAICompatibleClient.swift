@@ -1,6 +1,6 @@
 import Foundation
 
-struct OpenAICompatibleClient {
+struct OpenAICompatibleClient: PromptModelClient {
     let endpointURL: URL
     let apiKey: String
 
