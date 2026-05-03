@@ -1,6 +1,6 @@
 # PMT
 
-版本：`v0.0.33`
+版本：`v0.0.34`
 
 [English README](./README.md)
 
@@ -55,13 +55,18 @@ PMT 使用 Sparkle 做 App 内更新。应用内置的更新 feed 地址是：
 https://raw.githubusercontent.com/ink1ing/pmt/main/appcast.xml
 ```
 
-构建发布 zip 并重新生成 Sparkle appcast：
+构建 Sparkle 更新 zip、用户下载用 DMG，并重新生成 Sparkle appcast：
 
 ```sh
-scripts/package-release.sh 0.0.21 21
+scripts/package-release.sh 0.0.34 34
 ```
 
-然后将 `release/appcast/PMT-0.0.21.zip` 上传到 GitHub Release tag `v0.0.21`，再提交并推送生成的 `appcast.xml`。
+然后将两个文件都上传到对应的 GitHub Release tag：
+
+- `release/appcast/PMT-0.0.34.zip`：用于 Sparkle App 内更新。
+- `release/downloads/PMT-0.0.34.dmg`：用于普通用户下载安装。
+
+最后提交并推送生成的 `appcast.xml`。
 
 ## 权限
 
@@ -94,4 +99,4 @@ https://api.openai.com/v1
 
 ## 当前状态
 
-`v0.0.33` 已经包含核心改写闭环、统一保存、模型延迟测试、内置 Prompt 模式、可折叠日志、中英文界面切换，以及最新的单列设置布局。
+`v0.0.34` 已经包含核心改写闭环、统一保存、模型延迟测试、内置 Prompt 模式、可折叠日志、中英文界面切换，以及最新的单列设置布局。

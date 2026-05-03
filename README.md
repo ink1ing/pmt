@@ -1,6 +1,6 @@
 # PMT
 
-Version: `v0.0.33`
+Version: `v0.0.34`
 
 [中文说明](./README.zh-CN.md)
 
@@ -55,13 +55,18 @@ PMT uses Sparkle for in-app updates. The app reads its update feed from:
 https://raw.githubusercontent.com/ink1ing/pmt/main/appcast.xml
 ```
 
-To build a release archive and regenerate the Sparkle appcast:
+To build a Sparkle update zip, a user-facing DMG, and regenerate the Sparkle appcast:
 
 ```sh
-scripts/package-release.sh 0.0.21 21
+scripts/package-release.sh 0.0.34 34
 ```
 
-Upload `release/appcast/PMT-0.0.21.zip` to the GitHub release tag `v0.0.21`, then commit and push the generated `appcast.xml`.
+Upload both files to the matching GitHub release tag:
+
+- `release/appcast/PMT-0.0.34.zip`: used by Sparkle in-app updates.
+- `release/downloads/PMT-0.0.34.dmg`: user-facing installer download.
+
+Then commit and push the generated `appcast.xml`.
 
 ## Permissions
 
@@ -94,4 +99,4 @@ Custom gateways and local providers are supported as long as they expose compati
 
 ## Status
 
-`v0.0.33` delivers the core rewrite loop, unified settings save, model latency testing, built-in prompt presets, a collapsible log view, Chinese/English interface switching, and the latest single-column settings layout.
+`v0.0.34` delivers the core rewrite loop, unified settings save, model latency testing, built-in prompt presets, a collapsible log view, Chinese/English interface switching, and the latest single-column settings layout.
