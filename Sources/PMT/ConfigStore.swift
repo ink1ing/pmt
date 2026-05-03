@@ -21,15 +21,18 @@ final class ConfigStore: ObservableObject {
     @Published var rewriteMode: RewriteMode
     @Published var hotkey: HotkeyConfig
     @Published var statusBarIconEnabled: Bool
+    @Published var language: AppLanguage
     @Published var availableModels: [String] = []
     @Published var statusMessage: String = ""
     @Published var isBusy = false
     @Published var logs: [LogEntry] = []
+    @Published var showLogs = false
 
     private let defaultsKey = "PMT.config"
     private let logsKey = "PMT.logs"
     private let defaults: UserDefaults
     private let maxLogCount = 120
+    private var lastSavedAPIKey: String
 
     private static let configSuiteName = "dev.pmt.PMT.shared"
     private static let legacyConfigSuiteName = "dev.pmt.PMT"
@@ -37,6 +40,7 @@ final class ConfigStore: ObservableObject {
     init() {
         defaults = UserDefaults(suiteName: Self.configSuiteName) ?? .standard
         let legacyDefaults = UserDefaults(suiteName: Self.legacyConfigSuiteName)
+        let currentAPIKey = KeychainStore.readAPIKey()
 
         let config: AppConfig
         if let data = defaults.data(forKey: defaultsKey),
@@ -55,7 +59,8 @@ final class ConfigStore: ObservableObject {
         }
 
         endpointURL = config.endpointURL
-        apiKey = KeychainStore.readAPIKey()
+        apiKey = currentAPIKey
+        lastSavedAPIKey = currentAPIKey
         selectedModel = config.selectedModel
         systemPrompt = config.systemPrompt
         rewriteMode = config.rewriteMode
@@ -71,6 +76,7 @@ final class ConfigStore: ObservableObject {
             hotkey = config.hotkey
         }
         statusBarIconEnabled = config.statusBarIconEnabled
+        language = config.language
 
         if let data = defaults.data(forKey: logsKey),
            let decoded = try? JSONDecoder().decode([LogEntry].self, from: data) {
@@ -84,7 +90,7 @@ final class ConfigStore: ObservableObject {
         addLog("应用启动，配置域：\(Self.configSuiteName)")
 
         if shouldMigrateHotkey {
-            save()
+            saveConfig()
             addLog("已将旧默认快捷键迁移为 Ctrl + X")
         }
     }
@@ -96,22 +102,58 @@ final class ConfigStore: ObservableObject {
             systemPrompt: systemPrompt,
             rewriteMode: rewriteMode,
             hotkey: hotkey,
-            statusBarIconEnabled: statusBarIconEnabled
+            statusBarIconEnabled: statusBarIconEnabled,
+            language: language
         )
     }
 
-    func save() {
+    func saveConfig() {
         if let data = try? JSONEncoder().encode(config) {
             defaults.set(data, forKey: defaultsKey)
             defaults.synchronize()
         }
+        addLog("配置已保存")
+    }
+
+    func saveAPIKeyIfNeeded() throws {
+        guard apiKey != lastSavedAPIKey else {
+            return
+        }
+        try KeychainStore.saveAPIKey(apiKey)
+        lastSavedAPIKey = apiKey
+    }
+
+    func saveAPISection() {
+        saveConfig()
         do {
-            try KeychainStore.saveAPIKey(apiKey)
-            addLog("配置已保存")
+            try saveAPIKeyIfNeeded()
+            statusMessage = language == .zhHans ? "API 配置已保存" : "API settings saved"
+            addLog(statusMessage)
         } catch {
             statusMessage = error.localizedDescription
-            addLog("配置保存失败：\(error.localizedDescription)")
+            addLog(language == .zhHans ? "API 配置保存失败：\(error.localizedDescription)" : "API settings save failed: \(error.localizedDescription)")
         }
+    }
+
+    func savePromptSection() {
+        if let builtInPrompt = rewriteMode.builtInPrompt {
+            systemPrompt = builtInPrompt
+        }
+        saveConfig()
+        statusMessage = language == .zhHans ? "Prompt 配置已保存" : "Prompt settings saved"
+        addLog(statusMessage)
+    }
+
+    func saveHotkeySection() {
+        saveConfig()
+        statusMessage = language == .zhHans ? "快捷键配置已保存" : "Hotkey settings saved"
+        addLog(statusMessage)
+    }
+
+    func saveLanguageSection() {
+        saveConfig()
+        statusMessage = language == .zhHans ? "语言配置已保存" : "Language settings saved"
+        addLog(statusMessage)
     }
 
     func addLog(_ message: String) {
@@ -126,7 +168,7 @@ final class ConfigStore: ObservableObject {
     func clearLogs() {
         logs.removeAll()
         persistLogs()
-        statusMessage = "日志已清空"
+        statusMessage = language == .zhHans ? "日志已清空" : "Logs cleared"
     }
 
     func formattedLogLine(_ entry: LogEntry) -> String {
@@ -151,7 +193,7 @@ final class ConfigStore: ObservableObject {
 
     func loadModels() async {
         isBusy = true
-        statusMessage = "读取模型中..."
+        statusMessage = language == .zhHans ? "读取模型中..." : "Loading models..."
         addLog("开始读取模型列表")
         defer { isBusy = false }
 
@@ -161,31 +203,38 @@ final class ConfigStore: ObservableObject {
             if selectedModel.isEmpty, let first = models.first {
                 selectedModel = first
             }
-            save()
-            statusMessage = "模型读取成功"
-            addLog("模型读取成功：\(models.count) 个")
+            saveConfig()
+            statusMessage = language == .zhHans ? "模型读取成功" : "Models loaded"
+            addLog(language == .zhHans ? "模型读取成功：\(models.count) 个" : "Models loaded: \(models.count)")
         } catch {
             statusMessage = error.localizedDescription
-            addLog("模型读取失败：\(error.localizedDescription)")
+            addLog(language == .zhHans ? "模型读取失败：\(error.localizedDescription)" : "Model loading failed: \(error.localizedDescription)")
             Notifier.shared.error(error.localizedDescription)
         }
     }
 
     func testConnection() async {
         isBusy = true
-        statusMessage = "测试连接中..."
-        addLog("开始测试 API 连接")
+        statusMessage = language == .zhHans ? "测试模型中..." : "Testing model..."
+        addLog(language == .zhHans ? "开始测试当前模型" : "Testing current model")
         defer { isBusy = false }
 
         do {
-            let models = try await apiClient().listModels()
-            availableModels = models
-            statusMessage = "连接成功，读取到 \(models.count) 个模型"
-            save()
-            addLog("API 连接成功：读取到 \(models.count) 个模型")
+            guard !selectedModel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                throw PMTError.missingModel
+            }
+
+            let elapsed = try await apiClient().testModelLatency(
+                model: selectedModel,
+                systemPrompt: systemPrompt,
+                mode: rewriteMode
+            )
+            let formatted = String(format: "%.2f", elapsed)
+            statusMessage = language == .zhHans ? "模型测试成功，延迟 \(formatted) 秒" : "Model test succeeded, latency \(formatted)s"
+            addLog(language == .zhHans ? "模型测试成功：\(selectedModel)，延迟 \(formatted) 秒" : "Model test succeeded: \(selectedModel), latency \(formatted)s")
         } catch {
             statusMessage = error.localizedDescription
-            addLog("API 连接失败：\(error.localizedDescription)")
+            addLog(language == .zhHans ? "模型测试失败：\(error.localizedDescription)" : "Model test failed: \(error.localizedDescription)")
             Notifier.shared.error(error.localizedDescription)
         }
     }

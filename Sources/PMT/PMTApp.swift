@@ -32,7 +32,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
-        store.save()
+        store.saveConfig()
     }
 
     private func updateStatusBarIcon() {
@@ -109,7 +109,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 extension AppDelegate: NSWindowDelegate {
     func windowWillClose(_ notification: Notification) {
         if notification.object as? NSWindow == settingsWindow {
-            store.save()
+            store.saveConfig()
             settingsWindow = nil
         }
     }

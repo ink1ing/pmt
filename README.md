@@ -1,6 +1,6 @@
 # PMT
 
-Version: `v0.0.1`
+Version: `v0.0.11`
 
 [中文说明](./README.zh-CN.md)
 
@@ -18,11 +18,12 @@ The current release focuses on one workflow:
 - Global rewrite flow for selected text in other apps.
 - Default hotkey: `Ctrl + X`.
 - Configurable API endpoint, API key, model loading, model selection, and connection testing.
-- Editable system prompt with quick rewrite modes.
+- Built-in `Concise` and `Standard` prompt modes, plus a custom prompt mode.
 - Optional status bar icon.
 - Local action log for hotkey, permissions, API requests, and rewrite results.
 - Keychain storage for API keys.
 - OpenAI-compatible `/models` and `/chat/completions` support.
+- Chinese and English interface switching.
 
 ## Project Structure
 
@@ -49,9 +50,8 @@ PMT needs these macOS permissions for the full workflow:
 
 - `Accessibility`: activate the target app and send copy or paste shortcuts.
 - `Input Monitoring`: receive the global hotkey while another app is focused.
-- `Notifications`: show error notifications.
 
-The settings panel includes checks and shortcuts for these permissions.
+The settings panel includes checks and request actions for these permissions.
 
 ## API Compatibility
 
@@ -70,4 +70,4 @@ Custom gateways and local providers are supported as long as they expose compati
 
 ## Status
 
-`v0.0.1` is the first working version of PMT. It delivers the core rewrite loop, settings panel, API configuration, permission checks, and app packaging.
+`v0.0.11` delivers the core rewrite loop, split settings saves, model latency testing, built-in prompt presets, a collapsible log view, and Chinese/English interface switching.

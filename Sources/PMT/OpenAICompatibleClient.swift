@@ -47,7 +47,6 @@ struct OpenAICompatibleClient {
             model: model,
             messages: [
                 .init(role: "system", content: systemPrompt),
-                .init(role: "system", content: mode.instruction),
                 .init(role: "user", content: text)
             ],
             temperature: 0.2
@@ -63,6 +62,17 @@ struct OpenAICompatibleClient {
             throw PMTError.api("模型没有返回可用内容。")
         }
         return content
+    }
+
+    func testModelLatency(model: String, systemPrompt: String, mode: RewriteMode) async throws -> TimeInterval {
+        let start = Date()
+        _ = try await rewrite(
+            text: "Test prompt.",
+            model: model,
+            systemPrompt: systemPrompt,
+            mode: mode
+        )
+        return Date().timeIntervalSince(start)
     }
 
     private func validate(response: URLResponse, data: Data) throws {

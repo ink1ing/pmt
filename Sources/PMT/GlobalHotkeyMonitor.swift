@@ -76,7 +76,7 @@ final class GlobalHotkeyMonitor {
         eventTapState.updateHotkey(store.hotkey)
         nsEventState.updateHotkey(store.hotkey)
         store.addLog("启动全局热键监听：\(store.hotkey.displayName)")
-        store.addLog("键盘权限状态：\(PermissionManager.keyboardPermissionSummary())")
+        store.addLog("键盘权限状态：\(PermissionManager.keyboardPermissionSummary(language: store.language))")
 
         let mask = (1 << CGEventType.keyDown.rawValue)
         let unmanagedSelf = Unmanaged.passUnretained(self).toOpaque()
@@ -150,7 +150,7 @@ final class GlobalHotkeyMonitor {
                 store.addLog("CGEventTap 全局热键监听启动失败：无法创建 RunLoop Source")
             }
         } else {
-            store.addLog("CGEventTap 全局热键监听启动失败：\(PermissionManager.keyboardPermissionSummary())")
+            store.addLog("CGEventTap 全局热键监听启动失败：\(PermissionManager.keyboardPermissionSummary(language: store.language))")
             Notifier.shared.error("全局快捷键监听启动失败，请检查辅助功能权限。")
         }
 

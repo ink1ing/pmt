@@ -4,6 +4,8 @@ struct SettingsView: View {
     @ObservedObject var store: ConfigStore
     let onSave: () -> Void
 
+    private var language: AppLanguage { store.language }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             apiSection
@@ -16,19 +18,17 @@ struct SettingsView: View {
             Divider()
             permissionsSection
             Divider()
-            logSection
+            logToggleSection
+            if store.showLogs {
+                logSection
+            }
+            Divider()
+            languageSection
             HStack {
                 Text(store.statusMessage)
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
-                Spacer()
-                Button("保存") {
-                    store.save()
-                    onSave()
-                    store.statusMessage = "已保存"
-                }
-                .keyboardShortcut(.defaultAction)
             }
         }
         .padding(18)
@@ -37,16 +37,16 @@ struct SettingsView: View {
 
     private var apiSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("API")
+            Text(language.text(.api))
                 .font(.headline)
-            TextField("端点 URL", text: $store.endpointURL)
+            TextField(language.text(.endpointURL), text: $store.endpointURL)
                 .textFieldStyle(.roundedBorder)
             SecureField("API Key", text: $store.apiKey)
                 .textFieldStyle(.roundedBorder)
             HStack {
-                Picker("模型", selection: $store.selectedModel) {
+                Picker(language.text(.model), selection: $store.selectedModel) {
                     if store.selectedModel.isEmpty {
-                        Text("未选择").tag("")
+                        Text(language.text(.unselected)).tag("")
                     }
                     ForEach(store.availableModels, id: \.self) { model in
                         Text(model).tag(model)
@@ -57,17 +57,23 @@ struct SettingsView: View {
                 }
                 .frame(maxWidth: .infinity)
 
-                Button("读取模型") {
-                    store.save()
+                Button(language.text(.loadModels)) {
+                    store.saveAPISection()
                     Task { await store.loadModels() }
                 }
-                Button("测试 API") {
-                    store.save()
+                Button(language.text(.testModel)) {
+                    store.saveAPISection()
                     Task { await store.testConnection() }
                 }
             }
-            TextField("手动模型 ID", text: $store.selectedModel)
+            TextField(language.text(.manualModelID), text: $store.selectedModel)
                 .textFieldStyle(.roundedBorder)
+            HStack {
+                Spacer()
+                Button(language.text(.saveAPI)) {
+                    store.saveAPISection()
+                }
+            }
         }
         .disabled(store.isBusy)
     }
@@ -75,7 +81,7 @@ struct SettingsView: View {
     private var promptSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Text("Prompt")
+                Text(language.text(.prompt))
                     .font(.headline)
                 Spacer()
                 Picker("", selection: $store.rewriteMode) {
@@ -84,27 +90,39 @@ struct SettingsView: View {
                     }
                 }
                 .pickerStyle(.segmented)
-                .frame(width: 160)
+                .frame(width: 240)
             }
-            TextEditor(text: $store.systemPrompt)
-                .font(.system(.body, design: .monospaced))
-                .frame(height: 150)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 6)
-                        .stroke(Color.secondary.opacity(0.25))
-                )
+            if store.rewriteMode == .custom {
+                TextEditor(text: $store.systemPrompt)
+                    .font(.system(.body, design: .monospaced))
+                    .frame(height: 150)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 6)
+                            .stroke(Color.secondary.opacity(0.25))
+                    )
+            }
+            HStack {
+                Spacer()
+                Button(language.text(.savePrompt)) {
+                    store.savePromptSection()
+                }
+            }
         }
     }
 
     private var hotkeySection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("快捷键")
+            Text(language.text(.hotkey))
                 .font(.headline)
             HStack {
                 HotkeyRecorder(hotkey: $store.hotkey)
                     .frame(width: 180, height: 30)
-                Button("恢复 Ctrl + X") {
+                Button(language.text(.restoreControlX)) {
                     store.hotkey = .defaultControlX
+                }
+                Button(language.text(.saveHotkey)) {
+                    store.saveHotkeySection()
+                    onSave()
                 }
                 Spacer()
             }
@@ -113,74 +131,74 @@ struct SettingsView: View {
 
     private var statusBarSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("状态栏")
+            Text(language.text(.statusBar))
                 .font(.headline)
-            Toggle("显示顶部状态栏图标", isOn: $store.statusBarIconEnabled)
+            Toggle(language.text(.showStatusBarIcon), isOn: $store.statusBarIconEnabled)
                 .toggleStyle(.checkbox)
         }
     }
 
     private var permissionsSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("权限")
+            Text(language.text(.permissions))
                 .font(.headline)
             HStack {
-                Button("检查辅助功能") {
-                    let message = PermissionManager.accessibilityStatus()
+                Button(language.text(.checkAccessibility)) {
+                    let message = PermissionManager.accessibilityStatus(language: language)
                     store.statusMessage = message
                     store.addLog(message)
                 }
-                Button("请求辅助功能权限") {
-                    let message = PermissionManager.requestAccessibilityAccess()
+                Button(language.text(.requestAccessibility)) {
+                    let message = PermissionManager.requestAccessibilityAccess(language: language)
                     store.statusMessage = message
                     store.addLog(message)
-                }
-                Button("打开辅助功能设置") {
-                    store.addLog("打开辅助功能设置")
-                    PermissionManager.openAccessibilitySettings()
-                }
-                Button("打开输入监控设置") {
-                    store.addLog("打开输入监控设置")
-                    PermissionManager.openInputMonitoringSettings()
                 }
             }
             HStack {
-                Button("检查输入监控") {
-                    let message = PermissionManager.inputMonitoringStatus()
+                Button(language.text(.checkInputMonitoring)) {
+                    let message = PermissionManager.inputMonitoringStatus(language: language)
                     store.statusMessage = message
                     store.addLog(message)
                 }
-                Button("请求输入监控权限") {
-                    let message = PermissionManager.requestInputMonitoringAccess()
+                Button(language.text(.requestInputMonitoring)) {
+                    let message = PermissionManager.requestInputMonitoringAccess(language: language)
                     store.statusMessage = message
                     store.addLog(message)
                 }
-                Button("检查键盘权限") {
-                    let message = PermissionManager.keyboardPermissionSummary()
+            }
+            HStack {
+                Button(language.text(.checkKeyboardPermissions)) {
+                    let message = PermissionManager.keyboardPermissionSummary(language: language)
                     store.statusMessage = message
                     store.addLog(message)
                 }
-                Button("重启热键监听") {
-                    store.addLog("手动重启热键监听")
-                    store.save()
+                Button(language.text(.restartHotkeyMonitor)) {
+                    store.addLog(language == .zhHans ? "手动重启热键监听" : "Hotkey monitor restarted manually")
+                    store.saveConfig()
                     onSave()
                 }
             }
+        }
+    }
+
+    private var languageSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Button("检查通知权限") {
-                    Task {
-                        let message = await PermissionManager.notificationStatus()
-                        store.statusMessage = message
-                        store.addLog(message)
+                Text(language.text(.language))
+                    .font(.headline)
+                Spacer()
+                Picker("", selection: $store.language) {
+                    ForEach(AppLanguage.allCases) { language in
+                        Text(language.title).tag(language)
                     }
                 }
-                Button("打开通知设置") {
-                    store.addLog("打开通知设置")
-                    PermissionManager.openNotificationSettings()
-                }
-                Button("打开隐私与安全") {
-                    store.addLog("打开隐私与安全")
-                    PermissionManager.openPrivacySettings()
+                .pickerStyle(.segmented)
+                .frame(width: 180)
+            }
+            HStack {
+                Spacer()
+                Button(language.text(.saveLanguage)) {
+                    store.saveLanguageSection()
                 }
             }
         }
@@ -189,10 +207,10 @@ struct SettingsView: View {
     private var logSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Text("日志")
+                Text(language.text(.logs))
                     .font(.headline)
                 Spacer()
-                Button("清空") {
+                Button(language.text(.clear)) {
                     store.clearLogs()
                 }
             }
@@ -222,6 +240,13 @@ struct SettingsView: View {
                     }
                 }
             }
+        }
+    }
+
+    private var logToggleSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Toggle(language.text(.showLogs), isOn: $store.showLogs)
+                .toggleStyle(.checkbox)
         }
     }
 }

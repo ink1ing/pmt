@@ -28,7 +28,7 @@ final class SelectionRewriter {
             do {
                 try ensureAccessibility()
                 store.addLog("辅助功能权限检查通过")
-                store.save()
+                store.saveConfig()
 
                 let snapshot = ClipboardSnapshot()
                 try await activateTargetApplication(targetApplication)

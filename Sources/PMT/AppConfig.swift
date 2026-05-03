@@ -1,9 +1,96 @@
 import AppKit
 import Foundation
 
+enum AppLanguage: String, CaseIterable, Codable, Identifiable {
+    case zhHans
+    case english
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .zhHans:
+            "中文"
+        case .english:
+            "English"
+        }
+    }
+
+    func text(_ key: LocalizedKey) -> String {
+        switch (self, key) {
+        case (.zhHans, .api): "API"
+        case (.english, .api): "API"
+        case (.zhHans, .endpointURL): "端点 URL"
+        case (.english, .endpointURL): "Endpoint URL"
+        case (.zhHans, .model): "模型"
+        case (.english, .model): "Model"
+        case (.zhHans, .unselected): "未选择"
+        case (.english, .unselected): "Not selected"
+        case (.zhHans, .loadModels): "读取模型"
+        case (.english, .loadModels): "Load Models"
+        case (.zhHans, .testModel): "测试模型"
+        case (.english, .testModel): "Test Model"
+        case (.zhHans, .manualModelID): "手动模型 ID"
+        case (.english, .manualModelID): "Manual Model ID"
+        case (.zhHans, .saveAPI): "保存 API"
+        case (.english, .saveAPI): "Save API"
+        case (.zhHans, .prompt): "Prompt"
+        case (.english, .prompt): "Prompt"
+        case (.zhHans, .savePrompt): "保存 Prompt"
+        case (.english, .savePrompt): "Save Prompt"
+        case (.zhHans, .hotkey): "快捷键"
+        case (.english, .hotkey): "Hotkey"
+        case (.zhHans, .restoreControlX): "恢复 Ctrl + X"
+        case (.english, .restoreControlX): "Reset to Ctrl + X"
+        case (.zhHans, .saveHotkey): "保存快捷键"
+        case (.english, .saveHotkey): "Save Hotkey"
+        case (.zhHans, .statusBar): "状态栏"
+        case (.english, .statusBar): "Status Bar"
+        case (.zhHans, .showStatusBarIcon): "显示顶部状态栏图标"
+        case (.english, .showStatusBarIcon): "Show status bar icon"
+        case (.zhHans, .permissions): "权限"
+        case (.english, .permissions): "Permissions"
+        case (.zhHans, .checkAccessibility): "检查辅助功能"
+        case (.english, .checkAccessibility): "Check Accessibility"
+        case (.zhHans, .requestAccessibility): "请求辅助功能权限"
+        case (.english, .requestAccessibility): "Request Accessibility"
+        case (.zhHans, .checkInputMonitoring): "检查输入监控"
+        case (.english, .checkInputMonitoring): "Check Input Monitoring"
+        case (.zhHans, .requestInputMonitoring): "请求监控权限"
+        case (.english, .requestInputMonitoring): "Request Monitoring Permission"
+        case (.zhHans, .checkKeyboardPermissions): "检查键盘权限"
+        case (.english, .checkKeyboardPermissions): "Check Keyboard Permissions"
+        case (.zhHans, .restartHotkeyMonitor): "重启热键监听"
+        case (.english, .restartHotkeyMonitor): "Restart Hotkey Monitor"
+        case (.zhHans, .showLogs): "显示日志"
+        case (.english, .showLogs): "Show Logs"
+        case (.zhHans, .logs): "日志"
+        case (.english, .logs): "Logs"
+        case (.zhHans, .clear): "清空"
+        case (.english, .clear): "Clear"
+        case (.zhHans, .language): "语言"
+        case (.english, .language): "Language"
+        case (.zhHans, .saveLanguage): "保存语言"
+        case (.english, .saveLanguage): "Save Language"
+        }
+    }
+}
+
+enum LocalizedKey {
+    case api, endpointURL, model, unselected, loadModels, testModel, manualModelID, saveAPI
+    case prompt, savePrompt
+    case hotkey, restoreControlX, saveHotkey
+    case statusBar, showStatusBarIcon
+    case permissions, checkAccessibility, requestAccessibility, checkInputMonitoring, requestInputMonitoring
+    case checkKeyboardPermissions, restartHotkeyMonitor
+    case showLogs, logs, clear
+    case language, saveLanguage
+}
+
 enum RewriteMode: String, CaseIterable, Codable, Identifiable {
     case concise
     case standard
+    case custom
 
     var id: String { rawValue }
 
@@ -13,15 +100,50 @@ enum RewriteMode: String, CaseIterable, Codable, Identifiable {
             "简洁"
         case .standard:
             "常规"
+        case .custom:
+            "自定义"
         }
     }
 
-    var instruction: String {
+    var builtInPrompt: String? {
         switch self {
         case .concise:
-            "Rewrite the selected text into a concise, structured prompt. Keep only necessary sections and remove redundant wording."
+            """
+            你是一个提示词重写专家，负责将用户输入的提示词进行规范化改写。
+
+            你的目标是让原本模糊、不完整或表达不清的请求变得清晰、具体、结构合理，从而提升大模型的理解效率和输出质量。
+
+            改写时需遵守以下原则：
+
+            1. 保持原始意图，不改变用户需求本身。
+            2. 不新增任何额外需求或隐含任务。
+            3. 优化表达，使指令更直接、明确、无歧义。
+            4. 在必要时补全结构（如角色、目标、约束、输出形式），但仅基于原内容推导，不得扩展。
+            5. 控制篇幅，避免冗长。
+
+            仅输出改写后的提示词，不要附加解释。
+            """
         case .standard:
-            "Rewrite the selected text into a clear, structured prompt with goal, context, requirements, constraints, and output format where useful."
+            """
+            你是一个提示词重写专家，负责将用户输入的提示词进行规范化改写。
+
+            你的目标是将模糊、不完整或表达不清的请求转化为清晰、具体、结构合理的指令，从而提升大模型的理解效率和输出质量。
+
+            改写时需遵守以下原则：
+
+            1. 严格保留原始意图，不改变用户的核心需求。
+            2. 不新增任何额外需求、假设或隐含任务。
+            3. 优化表达，使指令更直接、明确、无歧义，避免口语化或冗余描述。
+            4. 对内容进行结构化整理，使其具备清晰的逻辑层次（如目标、上下文、约束、输出要求等），但仅基于原内容进行重组，不得扩展信息。
+            5. 若原提示词信息不足，仅做表达优化，不主动补充缺失内容。
+            6. 统一语气与指令风格，使其更符合大模型可执行的指令形式。
+            7. 控制篇幅，在保证清晰的前提下尽量简洁。
+
+            输出要求：
+            仅输出改写后的提示词内容，不添加解释、说明或额外文本。
+            """
+        case .custom:
+            nil
         }
     }
 }
@@ -186,6 +308,7 @@ struct AppConfig: Codable {
     var rewriteMode: RewriteMode
     var hotkey: HotkeyConfig
     var statusBarIconEnabled: Bool
+    var language: AppLanguage
 
     enum CodingKeys: String, CodingKey {
         case endpointURL
@@ -194,6 +317,7 @@ struct AppConfig: Codable {
         case rewriteMode
         case hotkey
         case statusBarIconEnabled
+        case language
     }
 
     init(
@@ -202,7 +326,8 @@ struct AppConfig: Codable {
         systemPrompt: String,
         rewriteMode: RewriteMode,
         hotkey: HotkeyConfig,
-        statusBarIconEnabled: Bool
+        statusBarIconEnabled: Bool,
+        language: AppLanguage
     ) {
         self.endpointURL = endpointURL
         self.selectedModel = selectedModel
@@ -210,6 +335,7 @@ struct AppConfig: Codable {
         self.rewriteMode = rewriteMode
         self.hotkey = hotkey
         self.statusBarIconEnabled = statusBarIconEnabled
+        self.language = language
     }
 
     init(from decoder: Decoder) throws {
@@ -220,19 +346,16 @@ struct AppConfig: Codable {
         rewriteMode = try container.decode(RewriteMode.self, forKey: .rewriteMode)
         hotkey = try container.decode(HotkeyConfig.self, forKey: .hotkey)
         statusBarIconEnabled = try container.decodeIfPresent(Bool.self, forKey: .statusBarIconEnabled) ?? true
+        language = try container.decodeIfPresent(AppLanguage.self, forKey: .language) ?? .zhHans
     }
 
     static let defaults = AppConfig(
         endpointURL: "https://api.openai.com/v1",
         selectedModel: "",
-        systemPrompt: """
-        You are PMT, a prompt rewriting assistant.
-        Rewrite selected user text into a structured prompt that is immediately usable with a large language model.
-        Preserve the user's intent, remove ambiguity, and do not add unrelated requirements.
-        Return only the rewritten prompt.
-        """,
+        systemPrompt: RewriteMode.standard.builtInPrompt ?? "",
         rewriteMode: .standard,
         hotkey: .defaultControlX,
-        statusBarIconEnabled: true
+        statusBarIconEnabled: true,
+        language: .zhHans
     )
 }
