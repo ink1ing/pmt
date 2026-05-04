@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 import SwiftUI
 
 @MainActor
@@ -10,6 +11,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var hotkeyMonitor: GlobalHotkeyMonitor?
     private var frontmostAppTracker: FrontmostAppTracker?
     private let updateManager = UpdateManager.shared
+    private var cancellables = Set<AnyCancellable>()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         if Bundle.main.bundleURL.pathExtension == "app" {
@@ -26,7 +28,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         hotkeyMonitor?.start()
 
-        updateStatusBarIcon()
+        bindStatusBarIconSetting()
+        ensureStatusBarIcon(retryDelays: [0.1, 0.5, 1.5])
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
             self?.showSettings()
         }
@@ -34,6 +37,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         store.saveConfig()
+    }
+
+    private func bindStatusBarIconSetting() {
+        store.$statusBarIconEnabled
+            .removeDuplicates()
+            .sink { [weak self] _ in
+                self?.updateStatusBarIcon()
+            }
+            .store(in: &cancellables)
+    }
+
+    private func ensureStatusBarIcon(retryDelays delays: [TimeInterval]) {
+        updateStatusBarIcon()
+        for delay in delays {
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+                self?.updateStatusBarIcon()
+            }
+        }
     }
 
     private func updateStatusBarIcon() {
@@ -45,16 +66,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
-        if statusItem != nil {
+        if statusItem?.button == nil {
+            if let statusItem {
+                NSStatusBar.system.removeStatusItem(statusItem)
+            }
+            statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        }
+
+        guard let item = statusItem, let button = item.button else {
+            store.addLog("状态栏图标创建失败：未获得状态栏按钮")
             return
         }
 
-        let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+        item.length = NSStatusItem.variableLength
+        button.imagePosition = .imageLeading
+        button.title = "PMT"
         if let image = NSImage(systemSymbolName: "text.badge.star", accessibilityDescription: "PMT") {
             image.isTemplate = true
-            item.button?.image = image
+            image.size = NSSize(width: 16, height: 16)
+            button.image = image
         } else {
-            item.button?.title = "PMT"
+            button.image = nil
         }
 
         let menu = NSMenu()
@@ -64,7 +96,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(.separator())
         menu.addItem(NSMenuItem(title: "退出", action: #selector(quit), keyEquivalent: "q"))
         item.menu = menu
-        statusItem = item
     }
 
     @objc private func openSettings() {
