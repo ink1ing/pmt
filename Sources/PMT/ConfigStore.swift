@@ -24,7 +24,16 @@ final class ConfigStore: ObservableObject {
     @Published var systemPrompt: String
     @Published var rewriteMode: RewriteMode
     @Published var hotkey: HotkeyConfig
+    @Published var previewEnabled: Bool
+    @Published var dictationHotkey: HotkeyConfig
+    @Published var whisperModel: String
+    @Published var whisperMetalAccelerationEnabled: Bool
+    @Published var whisperModelStatus: String = "未准备"
+    @Published var whisperDownloadProgress: Double = 0
+    @Published var whisperPreparationProgress: Double = 0
+    @Published var whisperPreparationStatus: String = ""
     @Published var statusBarIconEnabled: Bool
+    @Published var statusBarIconPreferenceSaved: Bool
     @Published var language: AppLanguage
     @Published var availableModels: [String] = []
     @Published var statusMessage: String = ""
@@ -79,7 +88,13 @@ final class ConfigStore: ObservableObject {
         } else {
             hotkey = config.hotkey
         }
-        statusBarIconEnabled = config.statusBarIconEnabled
+        previewEnabled = config.previewEnabled
+        dictationHotkey = config.dictationHotkey
+        whisperModel = config.whisperModel
+        whisperMetalAccelerationEnabled = true
+        let shouldRestoreDefaultStatusIcon = !config.statusBarIconPreferenceSaved
+        statusBarIconEnabled = shouldRestoreDefaultStatusIcon ? true : config.statusBarIconEnabled
+        statusBarIconPreferenceSaved = config.statusBarIconPreferenceSaved
         language = config.language
 
         if let data = defaults.data(forKey: logsKey),
@@ -97,6 +112,11 @@ final class ConfigStore: ObservableObject {
             saveConfig()
             addLog("已将旧默认快捷键迁移为 Ctrl + X")
         }
+
+        if shouldRestoreDefaultStatusIcon, !config.statusBarIconEnabled {
+            saveConfig()
+            addLog("已恢复顶部图标默认开启")
+        }
     }
 
     var config: AppConfig {
@@ -110,7 +130,12 @@ final class ConfigStore: ObservableObject {
             systemPrompt: systemPrompt,
             rewriteMode: rewriteMode,
             hotkey: hotkey,
+            previewEnabled: previewEnabled,
+            dictationHotkey: dictationHotkey,
+            whisperModel: whisperModel,
+            whisperMetalAccelerationEnabled: whisperMetalAccelerationEnabled,
             statusBarIconEnabled: statusBarIconEnabled,
+            statusBarIconPreferenceSaved: statusBarIconPreferenceSaved,
             language: language
         )
     }

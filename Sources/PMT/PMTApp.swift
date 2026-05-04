@@ -8,6 +8,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem?
     private var settingsWindow: NSWindow?
     private var rewriter: SelectionRewriter?
+    private var dictationWorkflow: DictationWorkflow?
     private var hotkeyMonitor: GlobalHotkeyMonitor?
     private var frontmostAppTracker: FrontmostAppTracker?
     private let updateManager = UpdateManager.shared
@@ -21,11 +22,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         rewriter = SelectionRewriter(store: store)
+        dictationWorkflow = DictationWorkflow(store: store)
         frontmostAppTracker = FrontmostAppTracker(store: store)
-        hotkeyMonitor = GlobalHotkeyMonitor(store: store) { [weak self] targetApplication in
-            let resolvedTarget = targetApplication ?? self?.frontmostAppTracker?.currentExternalApplication()
-            self?.rewriter?.rewriteSelection(targetApplication: resolvedTarget)
-        }
+        hotkeyMonitor = GlobalHotkeyMonitor(
+            store: store,
+            onRewriteTrigger: { [weak self] targetApplication in
+                let resolvedTarget = targetApplication ?? self?.frontmostAppTracker?.currentExternalApplication()
+                self?.rewriter?.rewriteSelection(targetApplication: resolvedTarget)
+            },
+            onDictationTrigger: { [weak self] targetApplication in
+                let resolvedTarget = targetApplication ?? self?.frontmostAppTracker?.currentExternalApplication()
+                self?.dictationWorkflow?.toggle(targetApplication: resolvedTarget)
+            }
+        )
         hotkeyMonitor?.start()
 
         bindStatusBarIconSetting()
@@ -73,7 +82,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             if let statusItem {
                 NSStatusBar.system.removeStatusItem(statusItem)
             }
-            statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+            statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         }
 
         guard let item = statusItem, let button = item.button else {
@@ -81,16 +90,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
-        item.length = NSStatusItem.variableLength
-        button.imagePosition = .imageLeading
-        button.title = "PMT"
+        item.length = NSStatusItem.squareLength
+        button.imagePosition = .imageOnly
+        button.title = ""
         if let image = NSImage(systemSymbolName: "text.badge.star", accessibilityDescription: "PMT") {
             image.isTemplate = true
             image.size = NSSize(width: 16, height: 16)
             button.image = image
         } else {
             button.image = nil
+            button.title = "PMT"
+            button.imagePosition = .noImage
+            item.length = NSStatusItem.variableLength
         }
+        button.toolTip = "PMT"
 
         let menu = NSMenu()
         menu.addItem(NSMenuItem(title: "设置", action: #selector(openSettings), keyEquivalent: ","))
@@ -129,7 +142,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
-        let view = SettingsView(store: store) { [weak self] in
+        let view = SettingsView(store: store, dictationWorkflow: dictationWorkflow) { [weak self] in
             self?.hotkeyMonitor?.start()
             self?.updateStatusBarIcon()
         }

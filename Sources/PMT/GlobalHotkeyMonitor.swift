@@ -2,14 +2,16 @@ import AppKit
 
 private final class HotkeyRuntimeState: @unchecked Sendable {
     private let lock = NSLock()
-    private var hotkey: HotkeyConfig = .defaultControlX
+    private var bindings: [HotkeyBinding] = []
     private var chordArmedUntil: Date?
+    private var armedBinding: HotkeyBinding?
     private let chordTimeout: TimeInterval = 1.2
 
-    func updateHotkey(_ hotkey: HotkeyConfig) {
+    func updateBindings(_ bindings: [HotkeyBinding]) {
         lock.lock()
-        self.hotkey = hotkey
+        self.bindings = bindings
         chordArmedUntil = nil
+        armedBinding = nil
         lock.unlock()
     }
 
@@ -18,39 +20,53 @@ private final class HotkeyRuntimeState: @unchecked Sendable {
         defer { lock.unlock() }
 
         if let chordArmedUntil {
-            guard Date() <= chordArmedUntil else {
+            guard Date() <= chordArmedUntil, let armedBinding else {
                 self.chordArmedUntil = nil
+                self.armedBinding = nil
                 return .expired
             }
 
-            if hotkey.matchesSecondary(keyCode: keyCode) {
+            if armedBinding.hotkey.matchesSecondary(keyCode: keyCode) {
                 self.chordArmedUntil = nil
-                return .trigger(hotkey.displayName)
+                self.armedBinding = nil
+                return .trigger(armedBinding)
             }
 
             self.chordArmedUntil = nil
+            self.armedBinding = nil
             return .secondaryMismatch(HotkeyConfig.keyName(for: keyCode))
         }
 
-        if hotkey.matches(keyCode: keyCode, flags: flags) {
-            if let secondaryKeyCode = hotkey.secondaryKeyCode {
+        for binding in bindings where binding.hotkey.matches(keyCode: keyCode, flags: flags) {
+            if let secondaryKeyCode = binding.hotkey.secondaryKeyCode {
                 chordArmedUntil = Date().addingTimeInterval(chordTimeout)
+                armedBinding = binding
                 return .armed(
                     firstKeyName: HotkeyConfig.keyName(for: keyCode),
                     secondKeyName: HotkeyConfig.keyName(for: secondaryKeyCode)
                 )
             }
-            return .trigger(hotkey.displayName)
+            return .trigger(binding)
         }
 
         return .none
     }
 }
 
+private struct HotkeyBinding {
+    let action: HotkeyAction
+    let hotkey: HotkeyConfig
+}
+
+private enum HotkeyAction {
+    case rewrite
+    case dictation
+}
+
 private enum HotkeyEvent {
     case none
     case armed(firstKeyName: String, secondKeyName: String)
-    case trigger(String)
+    case trigger(HotkeyBinding)
     case secondaryMismatch(String)
     case expired
 }
@@ -58,7 +74,8 @@ private enum HotkeyEvent {
 @MainActor
 final class GlobalHotkeyMonitor {
     private let store: ConfigStore
-    private let onTrigger: (NSRunningApplication?) -> Void
+    private let onRewriteTrigger: (NSRunningApplication?) -> Void
+    private let onDictationTrigger: (NSRunningApplication?) -> Void
     private let eventTapState = HotkeyRuntimeState()
     private let nsEventState = HotkeyRuntimeState()
     private var eventTap: CFMachPort?
@@ -66,16 +83,22 @@ final class GlobalHotkeyMonitor {
     private var globalMonitor: Any?
     private var localMonitor: Any?
 
-    init(store: ConfigStore, onTrigger: @escaping (NSRunningApplication?) -> Void) {
+    init(
+        store: ConfigStore,
+        onRewriteTrigger: @escaping (NSRunningApplication?) -> Void,
+        onDictationTrigger: @escaping (NSRunningApplication?) -> Void
+    ) {
         self.store = store
-        self.onTrigger = onTrigger
+        self.onRewriteTrigger = onRewriteTrigger
+        self.onDictationTrigger = onDictationTrigger
     }
 
     func start() {
         stop()
-        eventTapState.updateHotkey(store.hotkey)
-        nsEventState.updateHotkey(store.hotkey)
-        store.addLog("启动全局热键监听：\(store.hotkey.displayName)")
+        let bindings = currentBindings()
+        eventTapState.updateBindings(bindings)
+        nsEventState.updateBindings(bindings)
+        store.addLog("启动全局热键监听：\(bindings.map { $0.hotkey.displayName }.joined(separator: ", "))")
         store.addLog("键盘权限状态：\(PermissionManager.keyboardPermissionSummary(language: store.language))")
 
         let mask = (1 << CGEventType.keyDown.rawValue)
@@ -119,10 +142,10 @@ final class GlobalHotkeyMonitor {
                         monitor.store.addLog("CGEventTap 收到前导键：\(firstKeyName)，等待 \(secondKeyName)")
                     }
                     return nil
-                case .trigger(let displayName):
+                case .trigger(let binding):
                     Task { @MainActor in
-                        monitor.store.addLog("CGEventTap 收到完整快捷键：\(displayName)")
-                        monitor.onTrigger(NSWorkspace.shared.frontmostApplication)
+                        monitor.store.addLog("CGEventTap 收到完整快捷键：\(binding.hotkey.displayName)")
+                        monitor.trigger(binding.action, targetApplication: NSWorkspace.shared.frontmostApplication)
                     }
                     return nil
                 case .secondaryMismatch(let keyName):
@@ -183,13 +206,30 @@ final class GlobalHotkeyMonitor {
             return
         case .armed(let firstKeyName, let secondKeyName):
             store.addLog("\(source) 收到前导键：\(firstKeyName)，等待 \(secondKeyName)")
-        case .trigger(let displayName):
-            store.addLog("\(source) 收到完整快捷键：\(displayName)")
-            onTrigger(NSWorkspace.shared.frontmostApplication)
+        case .trigger(let binding):
+            store.addLog("\(source) 收到完整快捷键：\(binding.hotkey.displayName)")
+            trigger(binding.action, targetApplication: NSWorkspace.shared.frontmostApplication)
         case .secondaryMismatch(let keyName):
             store.addLog("\(source) 第二键不匹配：收到 \(keyName)")
         case .expired:
             store.addLog("\(source) 快捷键等待超时")
+        }
+    }
+
+    private func currentBindings() -> [HotkeyBinding] {
+        var bindings = [HotkeyBinding(action: .rewrite, hotkey: store.hotkey)]
+        if store.previewEnabled {
+            bindings.append(HotkeyBinding(action: .dictation, hotkey: store.dictationHotkey))
+        }
+        return bindings
+    }
+
+    private func trigger(_ action: HotkeyAction, targetApplication: NSRunningApplication?) {
+        switch action {
+        case .rewrite:
+            onRewriteTrigger(targetApplication)
+        case .dictation:
+            onDictationTrigger(targetApplication)
         }
     }
 

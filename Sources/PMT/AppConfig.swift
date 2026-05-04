@@ -82,6 +82,22 @@ enum AppLanguage: String, CaseIterable, Codable, Identifiable {
         case (.english, .showLogs): "Logs"
         case (.zhHans, .checkForUpdates): "检查更新"
         case (.english, .checkForUpdates): "Check for Updates"
+        case (.zhHans, .previewFeature): "预览功能"
+        case (.english, .previewFeature): "Preview"
+        case (.zhHans, .dictationHotkey): "语音快捷键和模型"
+        case (.english, .dictationHotkey): "Dictation Hotkey and Model"
+        case (.zhHans, .whisperModel): "模型"
+        case (.english, .whisperModel): "Model"
+        case (.zhHans, .downloadProgress): "下载"
+        case (.english, .downloadProgress): "Download"
+        case (.zhHans, .prepareProgress): "准备"
+        case (.english, .prepareProgress): "Prepare"
+        case (.zhHans, .prepareWhisperModel): "准备模型"
+        case (.english, .prepareWhisperModel): "Prepare Model"
+        case (.zhHans, .deleteWhisperModel): "删除模型"
+        case (.english, .deleteWhisperModel): "Delete Model"
+        case (.zhHans, .appleSiliconOnly): "仅支持 M 芯片"
+        case (.english, .appleSiliconOnly): "Apple Silicon only"
         case (.zhHans, .logs): "日志"
         case (.english, .logs): "Logs"
         case (.zhHans, .clear): "清空"
@@ -114,7 +130,7 @@ enum LocalizedKey {
     case statusBar, showStatusBarIcon
     case permissions, checkPermissions, requestAccessibility, requestInputMonitoring
     case checkKeyboardPermissions, restartHotkeyMonitor
-    case showLogs, checkForUpdates, logs, clear
+    case showLogs, checkForUpdates, previewFeature, dictationHotkey, whisperModel, downloadProgress, prepareProgress, prepareWhisperModel, deleteWhisperModel, appleSiliconOnly, logs, clear
     case language, otherFeatures, saveLanguage, saveAll
     case usage, usageStepPermissionsAndModel, usageStepPromptAndHotkey, usageStepRewrite
 }
@@ -211,6 +227,13 @@ struct HotkeyConfig: Codable, Equatable {
         carbonModifiers: 1 << 3,
         secondaryKeyCode: nil,
         displayName: "⌃X"
+    )
+
+    static let defaultControlD = HotkeyConfig(
+        keyCode: 2,
+        carbonModifiers: 1 << 3,
+        secondaryKeyCode: nil,
+        displayName: "⌃D"
     )
 
     static let legacyTabA = HotkeyConfig(
@@ -363,7 +386,12 @@ struct AppConfig: Codable {
     var systemPrompt: String
     var rewriteMode: RewriteMode
     var hotkey: HotkeyConfig
+    var previewEnabled: Bool
+    var dictationHotkey: HotkeyConfig
+    var whisperModel: String
+    var whisperMetalAccelerationEnabled: Bool
     var statusBarIconEnabled: Bool
+    var statusBarIconPreferenceSaved: Bool
     var language: AppLanguage
 
     enum CodingKeys: String, CodingKey {
@@ -376,7 +404,12 @@ struct AppConfig: Codable {
         case systemPrompt
         case rewriteMode
         case hotkey
+        case previewEnabled
+        case dictationHotkey
+        case whisperModel
+        case whisperMetalAccelerationEnabled
         case statusBarIconEnabled
+        case statusBarIconPreferenceSaved
         case language
     }
 
@@ -390,7 +423,12 @@ struct AppConfig: Codable {
         systemPrompt: String,
         rewriteMode: RewriteMode,
         hotkey: HotkeyConfig,
+        previewEnabled: Bool,
+        dictationHotkey: HotkeyConfig,
+        whisperModel: String,
+        whisperMetalAccelerationEnabled: Bool,
         statusBarIconEnabled: Bool,
+        statusBarIconPreferenceSaved: Bool,
         language: AppLanguage
     ) {
         self.modelProvider = modelProvider
@@ -402,7 +440,12 @@ struct AppConfig: Codable {
         self.systemPrompt = systemPrompt
         self.rewriteMode = rewriteMode
         self.hotkey = hotkey
+        self.previewEnabled = previewEnabled
+        self.dictationHotkey = dictationHotkey
+        self.whisperModel = whisperModel
+        self.whisperMetalAccelerationEnabled = whisperMetalAccelerationEnabled
         self.statusBarIconEnabled = statusBarIconEnabled
+        self.statusBarIconPreferenceSaved = statusBarIconPreferenceSaved
         self.language = language
     }
 
@@ -417,7 +460,12 @@ struct AppConfig: Codable {
         systemPrompt = try container.decode(String.self, forKey: .systemPrompt)
         rewriteMode = try container.decode(RewriteMode.self, forKey: .rewriteMode)
         hotkey = try container.decode(HotkeyConfig.self, forKey: .hotkey)
+        previewEnabled = try container.decodeIfPresent(Bool.self, forKey: .previewEnabled) ?? false
+        dictationHotkey = try container.decodeIfPresent(HotkeyConfig.self, forKey: .dictationHotkey) ?? .defaultControlD
+        whisperModel = try container.decodeIfPresent(String.self, forKey: .whisperModel) ?? "base"
+        whisperMetalAccelerationEnabled = try container.decodeIfPresent(Bool.self, forKey: .whisperMetalAccelerationEnabled) ?? true
         statusBarIconEnabled = try container.decodeIfPresent(Bool.self, forKey: .statusBarIconEnabled) ?? true
+        statusBarIconPreferenceSaved = try container.decodeIfPresent(Bool.self, forKey: .statusBarIconPreferenceSaved) ?? false
         language = try container.decodeIfPresent(AppLanguage.self, forKey: .language) ?? .zhHans
     }
 
@@ -431,7 +479,12 @@ struct AppConfig: Codable {
         systemPrompt: RewriteMode.standard.builtInPrompt ?? "",
         rewriteMode: .standard,
         hotkey: .defaultControlX,
+        previewEnabled: false,
+        dictationHotkey: .defaultControlD,
+        whisperModel: "base",
+        whisperMetalAccelerationEnabled: true,
         statusBarIconEnabled: true,
+        statusBarIconPreferenceSaved: false,
         language: .zhHans
     )
 }

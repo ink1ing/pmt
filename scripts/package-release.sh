@@ -31,10 +31,13 @@ cat > "$ARCHIVE_DIR/PMT-${VERSION}.md" <<EOF
 ${PMT_RELEASE_NOTES:-See the GitHub release notes for this version.}
 EOF
 
+rm -f "$ARCHIVE_DIR/appcast.xml"
 "$ROOT_DIR/.build/artifacts/sparkle/Sparkle/bin/generate_appcast" \
   --download-url-prefix "$APPCAST_URL_PREFIX" \
   --link "https://github.com/ink1ing/pmt" \
   --embed-release-notes \
+  --maximum-versions 1 \
+  --maximum-deltas 0 \
   "$ARCHIVE_DIR"
 
 cp "$ARCHIVE_DIR/appcast.xml" "$ROOT_DIR/appcast.xml"

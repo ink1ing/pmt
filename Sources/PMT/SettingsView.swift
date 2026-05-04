@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @ObservedObject var store: ConfigStore
+    let dictationWorkflow: DictationWorkflow?
     let onSave: () -> Void
 
     private var language: AppLanguage { store.language }
@@ -37,6 +38,8 @@ struct SettingsView: View {
             apiSection
             Divider()
             promptAndHotkeySection
+            Divider()
+            previewSection
             Divider()
             bottomSection
         }
@@ -281,13 +284,101 @@ struct SettingsView: View {
         }
     }
 
+    private var previewSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .center, spacing: 10) {
+                Toggle(language.text(.previewFeature), isOn: $store.previewEnabled)
+                    .toggleStyle(.checkbox)
+                    .onChange(of: store.previewEnabled) {
+                        store.saveConfig()
+                        onSave()
+                    }
+
+                Spacer(minLength: 12)
+
+                if !DictationWorkflow.isAppleSilicon {
+                    Text(language.text(.appleSiliconOnly))
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            if store.previewEnabled {
+                if DictationWorkflow.isAppleSilicon {
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack(alignment: .center, spacing: 12) {
+                            Text(language.text(.dictationHotkey))
+                                .font(.headline)
+                            Spacer()
+                            HotkeyRecorder(hotkey: $store.dictationHotkey)
+                                .frame(width: hotkeyControlWidth, height: 28)
+                                .onChange(of: store.dictationHotkey) {
+                                    store.saveConfig()
+                                    onSave()
+                                }
+                            Picker("", selection: $store.whisperModel) {
+                                Text("Base").tag("base")
+                                Text("Small").tag("small")
+                            }
+                            .pickerStyle(.segmented)
+                            .frame(width: controlWidth * 0.55)
+                            .onChange(of: store.whisperModel) {
+                                store.saveConfig()
+                                onSave()
+                            }
+
+                            Button(language.text(.prepareWhisperModel)) {
+                                dictationWorkflow?.prepareModel()
+                            }
+                            .fixedSize(horizontal: true, vertical: false)
+
+                            Button(language.text(.deleteWhisperModel)) {
+                                dictationWorkflow?.deleteCurrentModel()
+                            }
+                            .fixedSize(horizontal: true, vertical: false)
+                        }
+
+                        if !store.whisperPreparationStatus.isEmpty {
+                            VStack(alignment: .leading, spacing: 6) {
+                                HStack(alignment: .center, spacing: 10) {
+                                    Text(store.whisperPreparationStatus)
+                                        .foregroundStyle(.secondary)
+                                    Spacer()
+                                    Text("\(language.text(.downloadProgress)) \(progressPercent(store.whisperDownloadProgress))% · \(language.text(.prepareProgress)) \(progressPercent(store.whisperPreparationProgress))%")
+                                        .monospacedDigit()
+                                        .foregroundStyle(.secondary)
+                                }
+                                HStack(alignment: .center, spacing: 10) {
+                                    ProgressView(value: store.whisperDownloadProgress)
+                                    ProgressView(value: store.whisperPreparationProgress)
+                                }
+                            }
+                        }
+                    }
+                    .padding(.top, 2)
+                } else {
+                    Text(language.text(.appleSiliconOnly))
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+    }
+
+    private func progressPercent(_ value: Double) -> Int {
+        Int((min(max(value, 0), 1) * 100).rounded())
+    }
+
     private var otherFeaturesSection: some View {
         HStack(alignment: .center, spacing: 10) {
             Toggle(language.text(.showStatusBarIcon), isOn: $store.statusBarIconEnabled)
-            .toggleStyle(.checkbox)
+                .toggleStyle(.checkbox)
+                .onChange(of: store.statusBarIconEnabled) {
+                    store.statusBarIconPreferenceSaved = true
+                    store.saveConfig()
+                    onSave()
+                }
 
             Toggle(language.text(.showLogs), isOn: $store.showLogs)
-            .toggleStyle(.checkbox)
+                .toggleStyle(.checkbox)
 
             Picker("", selection: $store.language) {
                 ForEach(AppLanguage.allCases) { language in

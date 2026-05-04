@@ -5,10 +5,10 @@ import QuartzCore
 final class RewriteActivityIndicator {
     private var panel: NSPanel?
 
-    func show() {
+    func show(symbol: String = "🤔") {
         hide()
 
-        let size = NSSize(width: 44, height: 44)
+        let size = NSSize(width: 68, height: 44)
         let mouseLocation = NSEvent.mouseLocation
         let origin = NSPoint(
             x: mouseLocation.x + 12,
@@ -28,7 +28,7 @@ final class RewriteActivityIndicator {
         panel.level = .statusBar
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .transient]
 
-        let contentView = EmojiSpinnerView(frame: NSRect(origin: .zero, size: size))
+        let contentView = EmojiSpinnerView(frame: NSRect(origin: .zero, size: size), symbol: symbol)
         panel.contentView = contentView
         panel.orderFrontRegardless()
         contentView.startAnimating()
@@ -46,8 +46,10 @@ final class RewriteActivityIndicator {
 private final class EmojiSpinnerView: NSView {
     private var timer: Timer?
     private var rotation: CGFloat = 0
+    private let symbol: String
 
-    override init(frame frameRect: NSRect) {
+    init(frame frameRect: NSRect, symbol: String) {
+        self.symbol = symbol
         super.init(frame: frameRect)
         wantsLayer = true
         layer?.backgroundColor = NSColor.clear.cgColor
@@ -65,9 +67,9 @@ private final class EmojiSpinnerView: NSView {
         guard let context = NSGraphicsContext.current?.cgContext else { return }
         let center = CGPoint(x: bounds.midX, y: bounds.midY)
         let attributedEmoji = NSAttributedString(
-            string: "🤔",
+            string: symbol,
             attributes: [
-                .font: NSFont.systemFont(ofSize: 30),
+                .font: NSFont.systemFont(ofSize: 28),
                 .foregroundColor: NSColor.labelColor
             ]
         )

@@ -108,6 +108,14 @@ final class RecorderField: NSControl {
             secondaryKeyCode: nil
         )
         stringValue = display
+        let config = HotkeyConfig(
+            keyCode: keyCode,
+            carbonModifiers: carbonModifiers,
+            secondaryKeyCode: nil,
+            displayName: display
+        )
+        committedDisplayValue = display
+        onChange?(config)
     }
 
     override func resignFirstResponder() -> Bool {

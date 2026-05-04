@@ -3,21 +3,22 @@
     <channel>
         <title>PMT</title>
         <item>
-            <title>0.0.47</title>
-            <pubDate>Mon, 04 May 2026 12:15:18 +0800</pubDate>
+            <title>0.0.81</title>
+            <pubDate>Mon, 04 May 2026 13:48:12 +0800</pubDate>
             <link>https://github.com/ink1ing/pmt</link>
-            <sparkle:version>47</sparkle:version>
-            <sparkle:shortVersionString>0.0.47</sparkle:shortVersionString>
+            <sparkle:version>81</sparkle:version>
+            <sparkle:shortVersionString>0.0.81</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-            <description sparkle:format="markdown"><![CDATA[# PMT 0.0.47
+            <description sparkle:format="markdown"><![CDATA[# PMT 0.0.81
 
-- 启动后自动检测新版本，发现更新时弹窗询问是否更新。
-- 顶部状态改为“已就绪 / 未就绪”，根据权限、模型配置和快捷键状态判断。
-- 模型渠道简化为 OpenAI / GitHub。
-- GitHub 按钮简化为“授权 / 退出”。
+- 支持 GitHub OAuth 认证并读取全量模型。
+- 新增预览功能：语音录入，提供 Base 和 Small 两种 WhisperKit 模型。
+- 语音录入支持 Apple Silicon / M 芯片 Metal 加速。
+- 支持语音录入和模型改写的两步工作流。
+- 更新应用 icon。
 ]]></description>
-            <enclosure url="https://github.com/ink1ing/pmt/releases/download/v0.0.47/PMT-0.0.47.zip" length="1370506" type="application/octet-stream" sparkle:edSignature="c7+vZeIpx4qyIU7/WeojOvkUtuBhhfGGMwIaS+yIZ2/nslJbixIJTs5riLVmuigY+dSRc8XQYGAFVmB+uDSiDQ=="/>
+            <enclosure url="https://github.com/ink1ing/pmt/releases/download/v0.0.81/PMT-0.0.81.zip" length="4274169" type="application/octet-stream" sparkle:edSignature="7nL3VdLBqVO/vaF8hGae2WyLfPV4zEGNY8ZUOqjI+/O61qnELGnFnFNDQKWgfFnuuNF9DisKm1sAiWPai0ZfBA=="/>
         </item>
     </channel>
 </rss>
