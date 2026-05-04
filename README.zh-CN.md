@@ -1,6 +1,6 @@
 # PMT
 
-版本：`v0.0.81`
+版本：`v0.0.84`
 
 [English README](./README.md)
 
@@ -74,13 +74,13 @@ https://raw.githubusercontent.com/ink1ing/pmt/main/appcast.xml
 构建 Sparkle 更新 ZIP、用户下载用 DMG，并重新生成 Sparkle appcast：
 
 ```sh
-scripts/package-release.sh 0.0.81 81
+scripts/package-release.sh 0.0.84 84
 ```
 
 然后将两个文件都上传到对应的 GitHub Release tag：
 
-- `release/appcast/PMT-0.0.81.zip`：用于 Sparkle App 内更新。
-- `release/downloads/PMT-0.0.81.dmg`：用于普通用户下载安装。
+- `release/appcast/PMT-0.0.84.zip`：用于 Sparkle App 内更新。
+- `release/downloads/PMT-0.0.84.dmg`：用于普通用户下载安装。
 
 最后提交并推送生成的 `appcast.xml`。
 
@@ -116,4 +116,4 @@ https://api.openai.com/v1
 
 ## 当前状态
 
-`v0.0.81` 增加了 GitHub OAuth 模型接入、Apple Silicon 语音听写预览、Base 和 Small WhisperKit 模型、Metal 加速、本地转写到远程模型结构化改写的两步工作流、阶段状态 icon、录音提示音，以及新的应用 icon。
+`v0.0.84` 加强了内置提示词输出约束，谨慎和精确模式会直接输出改写后的提示词，不再添加 Markdown 格式、解释性标题或额外说明。

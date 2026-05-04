@@ -1,6 +1,6 @@
 # PMT
 
-Version: `v0.0.81`
+Version: `v0.0.84`
 
 [中文说明](./README.zh-CN.md)
 
@@ -72,13 +72,13 @@ https://raw.githubusercontent.com/ink1ing/pmt/main/appcast.xml
 To build a Sparkle update ZIP, a user-facing DMG, and regenerate the Sparkle appcast:
 
 ```sh
-scripts/package-release.sh 0.0.81 81
+scripts/package-release.sh 0.0.84 84
 ```
 
 Upload both files to the matching GitHub release tag:
 
-- `release/appcast/PMT-0.0.81.zip`: used by Sparkle in-app updates.
-- `release/downloads/PMT-0.0.81.dmg`: user-facing installer download.
+- `release/appcast/PMT-0.0.84.zip`: used by Sparkle in-app updates.
+- `release/downloads/PMT-0.0.84.dmg`: user-facing installer download.
 
 Then commit and push the generated `appcast.xml`.
 
@@ -114,4 +114,4 @@ Custom gateways and local providers are supported as long as they expose compati
 
 ## Status
 
-`v0.0.81` adds GitHub OAuth model access, Apple Silicon dictation preview with Base and Small WhisperKit models, Metal-accelerated local transcription, the dictation-to-structured-rewrite workflow, stage indicators, dictation sounds, and the updated application icon.
+`v0.0.84` adds stricter built-in prompt output rules so cautious and precise modes return only rewritten prompt text without Markdown formatting or extra explanatory prefixes.
