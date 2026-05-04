@@ -33,6 +33,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
             self?.showSettings()
         }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { [weak self] in
+            self?.updateManager.checkForUpdatesOnLaunch()
+        }
     }
 
     func applicationWillTerminate(_ notification: Notification) {

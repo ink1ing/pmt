@@ -3,6 +3,14 @@ import Foundation
 import IOKit.hid
 
 enum PermissionManager {
+    static var hasAccessibilityAccess: Bool {
+        AXIsProcessTrusted()
+    }
+
+    static var hasInputMonitoringAccess: Bool {
+        IOHIDCheckAccess(kIOHIDRequestTypeListenEvent) == kIOHIDAccessTypeGranted
+    }
+
     static func accessibilityStatus(language: AppLanguage) -> String {
         switch (language, AXIsProcessTrusted()) {
         case (.zhHans, true): "辅助功能权限已开启"

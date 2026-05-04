@@ -28,7 +28,7 @@ ditto -c -k --keepParent "$ROOT_DIR/dist/PMT.app" "$ARCHIVE_DIR/$ZIP_NAME"
 cat > "$ARCHIVE_DIR/PMT-${VERSION}.md" <<EOF
 # PMT ${VERSION}
 
-See the GitHub release notes for this version.
+${PMT_RELEASE_NOTES:-See the GitHub release notes for this version.}
 EOF
 
 "$ROOT_DIR/.build/artifacts/sparkle/Sparkle/bin/generate_appcast" \

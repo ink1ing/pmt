@@ -8,6 +8,25 @@ struct SettingsView: View {
     private let controlWidth: CGFloat = 240
     private let hotkeyControlWidth: CGFloat = 60
     private let modelColumnWidth: CGFloat = 240
+    private var isAppReady: Bool {
+        hasRequiredPermissions && hasModelCredential && hasBoundHotkey
+    }
+    private var hasRequiredPermissions: Bool {
+        PermissionManager.hasAccessibilityAccess && PermissionManager.hasInputMonitoringAccess
+    }
+    private var hasModelCredential: Bool {
+        !store.apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
+        !store.githubOAuthToken.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+    private var hasBoundHotkey: Bool {
+        !store.hotkey.displayName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+    private var readinessText: String {
+        if language == .zhHans {
+            return isAppReady ? "已就绪" : "未就绪"
+        }
+        return isAppReady ? "Ready" : "Not Ready"
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -27,8 +46,9 @@ struct SettingsView: View {
 
     private var usageSection: some View {
         HStack(alignment: .center, spacing: 10) {
-            Text(language.text(.usage))
+            Text(readinessText)
                 .font(.headline)
+                .foregroundStyle(isAppReady ? .green : .secondary)
                 .lineLimit(1)
 
             Spacer(minLength: 10)

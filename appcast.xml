@@ -3,18 +3,21 @@
     <channel>
         <title>PMT</title>
         <item>
-            <title>0.0.46</title>
-            <pubDate>Mon, 04 May 2026 12:07:09 +0800</pubDate>
+            <title>0.0.47</title>
+            <pubDate>Mon, 04 May 2026 12:15:18 +0800</pubDate>
             <link>https://github.com/ink1ing/pmt</link>
-            <sparkle:version>46</sparkle:version>
-            <sparkle:shortVersionString>0.0.46</sparkle:shortVersionString>
+            <sparkle:version>47</sparkle:version>
+            <sparkle:shortVersionString>0.0.47</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-            <description sparkle:format="markdown"><![CDATA[# PMT 0.0.46
+            <description sparkle:format="markdown"><![CDATA[# PMT 0.0.47
 
-See the GitHub release notes for this version.
+- 启动后自动检测新版本，发现更新时弹窗询问是否更新。
+- 顶部状态改为“已就绪 / 未就绪”，根据权限、模型配置和快捷键状态判断。
+- 模型渠道简化为 OpenAI / GitHub。
+- GitHub 按钮简化为“授权 / 退出”。
 ]]></description>
-            <enclosure url="https://github.com/ink1ing/pmt/releases/download/v0.0.46/PMT-0.0.46.zip" length="1364437" type="application/octet-stream" sparkle:edSignature="eopvQ/ZSCN9Q+Wv5/YO58f0iw3rRG+VTbp3KUtCo3V9ws39Vg+RmEq4GEMYBAabRNC/2JuzsYcy2jZy+f1gzBA=="/>
+            <enclosure url="https://github.com/ink1ing/pmt/releases/download/v0.0.47/PMT-0.0.47.zip" length="1370506" type="application/octet-stream" sparkle:edSignature="c7+vZeIpx4qyIU7/WeojOvkUtuBhhfGGMwIaS+yIZ2/nslJbixIJTs5riLVmuigY+dSRc8XQYGAFVmB+uDSiDQ=="/>
         </item>
     </channel>
 </rss>
