@@ -58,8 +58,24 @@ enum PermissionManager {
     }
 
     static func keyboardPermissionSummary(language: AppLanguage) -> String {
-        let separator = "\n"
-        return "\(accessibilityStatus(language: language))\(separator)\(inputMonitoringStatus(language: language))"
+        switch (language, hasAccessibilityAccess, hasInputMonitoringAccess) {
+        case (.zhHans, false, false):
+            return "都未开启"
+        case (.zhHans, false, true):
+            return "辅助功能未开启"
+        case (.zhHans, true, false):
+            return "输入监控未开启"
+        case (.zhHans, true, true):
+            return "都已开启"
+        case (.english, false, false):
+            return "Both disabled"
+        case (.english, false, true):
+            return "Accessibility disabled"
+        case (.english, true, false):
+            return "Input Monitoring disabled"
+        case (.english, true, true):
+            return "Both enabled"
+        }
     }
 
     static func openAccessibilitySettings() {

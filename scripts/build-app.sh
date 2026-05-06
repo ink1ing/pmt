@@ -12,6 +12,13 @@ PMT_VERSION="${PMT_VERSION:-0.0.20}"
 PMT_BUILD="${PMT_BUILD:-20}"
 PMT_APPCAST_URL="${PMT_APPCAST_URL:-https://raw.githubusercontent.com/ink1ing/pmt/main/appcast.xml}"
 PMT_SPARKLE_PUBLIC_KEY="${PMT_SPARKLE_PUBLIC_KEY:-hhzAtydrywj71r1bOKpOWDEAe4dn/+LO+ZUv5PK14Ew=}"
+PMT_BUNDLE_ID="${PMT_BUNDLE_ID:-dev.pmt.PMT}"
+PMT_CODESIGN_IDENTITY="${PMT_CODESIGN_IDENTITY:--}"
+if [ "${PMT_CODESIGN_REQUIREMENTS+x}" = "" ] && [ "$PMT_CODESIGN_IDENTITY" = "-" ]; then
+  PMT_CODESIGN_REQUIREMENTS="designated => identifier \"${PMT_BUNDLE_ID}\""
+else
+  PMT_CODESIGN_REQUIREMENTS="${PMT_CODESIGN_REQUIREMENTS:-}"
+fi
 
 cd "$ROOT_DIR"
 swift build -c release
@@ -41,7 +48,7 @@ cat > "$CONTENTS_DIR/Info.plist" <<PLIST
   <key>CFBundleExecutable</key>
   <string>PMT</string>
   <key>CFBundleIdentifier</key>
-  <string>dev.pmt.PMT</string>
+  <string>${PMT_BUNDLE_ID}</string>
   <key>CFBundleName</key>
   <string>PMT</string>
   <key>CFBundleDisplayName</key>
@@ -76,6 +83,33 @@ cat > "$CONTENTS_DIR/Info.plist" <<PLIST
 </plist>
 PLIST
 
-codesign --force --deep --sign - "$APP_DIR" >/dev/null
+sign_code() {
+  codesign --force --sign "$PMT_CODESIGN_IDENTITY" "$1" >/dev/null
+}
+
+SPARKLE_APP_FRAMEWORK="$FRAMEWORKS_DIR/Sparkle.framework"
+if [ -d "$SPARKLE_APP_FRAMEWORK" ]; then
+  for version_dir in "$SPARKLE_APP_FRAMEWORK"/Versions/*; do
+    [ -d "$version_dir" ] || continue
+    [ "$(basename "$version_dir")" != "Current" ] || continue
+
+    for xpc in "$version_dir"/XPCServices/*.xpc; do
+      [ -e "$xpc" ] && sign_code "$xpc"
+    done
+
+    [ -e "$version_dir/Updater.app" ] && sign_code "$version_dir/Updater.app"
+    [ -e "$version_dir/Autoupdate" ] && sign_code "$version_dir/Autoupdate"
+  done
+
+  sign_code "$SPARKLE_APP_FRAMEWORK"
+fi
+
+if [ -n "$PMT_CODESIGN_REQUIREMENTS" ]; then
+  codesign --force --sign "$PMT_CODESIGN_IDENTITY" \
+    --requirements "=${PMT_CODESIGN_REQUIREMENTS}" \
+    "$APP_DIR" >/dev/null
+else
+  codesign --force --sign "$PMT_CODESIGN_IDENTITY" "$APP_DIR" >/dev/null
+fi
 
 echo "$APP_DIR"

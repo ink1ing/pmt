@@ -116,8 +116,8 @@ enum AppLanguage: String, CaseIterable, Codable, Identifiable {
         case (.english, .usageStepPermissionsAndModel): "1. Permissions/model"
         case (.zhHans, .usageStepPromptAndHotkey): "2. 配置快捷键和提示词"
         case (.english, .usageStepPromptAndHotkey): "2. Hotkey/prompt"
-        case (.zhHans, .usageStepRewrite): "3. 选中文字，按下快捷键改写"
-        case (.english, .usageStepRewrite): "3. Select + rewrite"
+        case (.zhHans, .usageStepRewrite): "3. 选中文字并改写"
+        case (.english, .usageStepRewrite): "3. Select and rewrite"
         }
     }
 }

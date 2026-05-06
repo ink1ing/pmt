@@ -22,11 +22,16 @@ struct SettingsView: View {
     private var hasBoundHotkey: Bool {
         !store.hotkey.displayName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
+    private var appVersion: String {
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
+        let normalized = version?.trimmingCharacters(in: .whitespacesAndNewlines)
+        return normalized?.isEmpty == false ? "v\(normalized!)" : "v0.0.84"
+    }
     private var readinessText: String {
         if language == .zhHans {
-            return isAppReady ? "已就绪" : "未就绪"
+            return "\(appVersion) \(isAppReady ? "已就绪" : "未就绪")"
         }
-        return isAppReady ? "Ready" : "Not Ready"
+        return "\(appVersion) \(isAppReady ? "Ready" : "Not Ready")"
     }
 
     var body: some View {

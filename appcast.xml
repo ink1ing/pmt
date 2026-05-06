@@ -3,20 +3,21 @@
     <channel>
         <title>PMT</title>
         <item>
-            <title>0.0.84</title>
-            <pubDate>Mon, 04 May 2026 14:03:53 +0800</pubDate>
+            <title>0.0.87</title>
+            <pubDate>Wed, 06 May 2026 11:58:38 +0800</pubDate>
             <link>https://github.com/ink1ing/pmt</link>
-            <sparkle:version>84</sparkle:version>
-            <sparkle:shortVersionString>0.0.84</sparkle:shortVersionString>
+            <sparkle:version>87</sparkle:version>
+            <sparkle:shortVersionString>0.0.87</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-            <description sparkle:format="markdown"><![CDATA[# PMT 0.0.84
+            <description sparkle:format="markdown"><![CDATA[# PMT 0.0.87
 
-- 修复谨慎和精确内置提示词的输出约束。
-- 要求模型直接输出改写后的提示词，不添加对话式说明或引导语。
-- 禁止在改写结果中使用 Markdown 语法格式。
+- 简化权限检查返回：都未开启、辅助功能未开启、输入监控未开启、都已开启。
+- 顶部就绪状态增加当前 App 版本号。
+- 使用说明第三步改为“选中文字并改写”。
+- 稳定 ad-hoc 签名身份，避免后续更新反复触发 macOS 权限重授。
 ]]></description>
-            <enclosure url="https://github.com/ink1ing/pmt/releases/download/v0.0.84/PMT-0.0.84.zip" length="4274244" type="application/octet-stream" sparkle:edSignature="wYPIKFEcoBrLWB1qFO++fxVqCojGuaPkiqGxOvoviHZClTV/P+ehVWdUGpp2VaxY7fSyLIJ9HaznlEKlG5WACA=="/>
+            <enclosure url="https://github.com/ink1ing/pmt/releases/download/v0.0.87/PMT-0.0.87.zip" length="4274398" type="application/octet-stream" sparkle:edSignature="EZgY3jDMSMD7SIg+t1QMuEzWKGv/jZwIAKJmqp2eGfAIvwuxuSsKWI3Yd4BddSQRdk++maMliwFoQjHNXFVJAQ=="/>
         </item>
     </channel>
 </rss>

@@ -150,7 +150,7 @@ struct GitHubCopilotClient: PromptModelClient {
         request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
         request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
         request.setValue("2022-11-28", forHTTPHeaderField: "X-GitHub-Api-Version")
-        request.setValue("PMT/0.0.84", forHTTPHeaderField: "User-Agent")
+        request.setValue("PMT/0.0.87", forHTTPHeaderField: "User-Agent")
         return try await send(request)
     }
 
@@ -164,7 +164,7 @@ struct GitHubCopilotClient: PromptModelClient {
         request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
         request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
         request.setValue("2022-11-28", forHTTPHeaderField: "X-GitHub-Api-Version")
-        request.setValue("PMT/0.0.84", forHTTPHeaderField: "User-Agent")
+        request.setValue("PMT/0.0.87", forHTTPHeaderField: "User-Agent")
 
         let response: CopilotTokenResponse = try await Self.send(request)
         let expiresAt = response.expiresAt.map { Date(timeIntervalSince1970: TimeInterval($0)) }
