@@ -110,6 +110,8 @@ enum AppLanguage: String, CaseIterable, Codable, Identifiable {
         case (.english, .saveLanguage): "Save Language"
         case (.zhHans, .saveAll): "保存"
         case (.english, .saveAll): "Save"
+        case (.zhHans, .quitApp): "退出"
+        case (.english, .quitApp): "Quit"
         case (.zhHans, .usage): "使用说明"
         case (.english, .usage): "Usage"
         case (.zhHans, .usageStepPermissionsAndModel): "1. 配置权限和模型"
@@ -131,7 +133,7 @@ enum LocalizedKey {
     case permissions, checkPermissions, requestAccessibility, requestInputMonitoring
     case checkKeyboardPermissions, restartHotkeyMonitor
     case showLogs, checkForUpdates, previewFeature, dictationHotkey, whisperModel, downloadProgress, prepareProgress, prepareWhisperModel, deleteWhisperModel, appleSiliconOnly, logs, clear
-    case language, otherFeatures, saveLanguage, saveAll
+    case language, otherFeatures, saveLanguage, saveAll, quitApp
     case usage, usageStepPermissionsAndModel, usageStepPromptAndHotkey, usageStepRewrite
 }
 
@@ -400,8 +402,8 @@ struct AppConfig: Codable {
     var dictationHotkey: HotkeyConfig
     var whisperModel: String
     var whisperMetalAccelerationEnabled: Bool
-    var statusBarIconEnabled: Bool
-    var statusBarIconPreferenceSaved: Bool
+    var floatingIconEnabled: Bool
+    var floatingIconPreferenceSaved: Bool
     var language: AppLanguage
 
     enum CodingKeys: String, CodingKey {
@@ -418,8 +420,8 @@ struct AppConfig: Codable {
         case dictationHotkey
         case whisperModel
         case whisperMetalAccelerationEnabled
-        case statusBarIconEnabled
-        case statusBarIconPreferenceSaved
+        case floatingIconEnabled = "statusBarIconEnabled"
+        case floatingIconPreferenceSaved = "statusBarIconPreferenceSaved"
         case language
     }
 
@@ -437,8 +439,8 @@ struct AppConfig: Codable {
         dictationHotkey: HotkeyConfig,
         whisperModel: String,
         whisperMetalAccelerationEnabled: Bool,
-        statusBarIconEnabled: Bool,
-        statusBarIconPreferenceSaved: Bool,
+        floatingIconEnabled: Bool,
+        floatingIconPreferenceSaved: Bool,
         language: AppLanguage
     ) {
         self.modelProvider = modelProvider
@@ -454,28 +456,28 @@ struct AppConfig: Codable {
         self.dictationHotkey = dictationHotkey
         self.whisperModel = whisperModel
         self.whisperMetalAccelerationEnabled = whisperMetalAccelerationEnabled
-        self.statusBarIconEnabled = statusBarIconEnabled
-        self.statusBarIconPreferenceSaved = statusBarIconPreferenceSaved
+        self.floatingIconEnabled = floatingIconEnabled
+        self.floatingIconPreferenceSaved = floatingIconPreferenceSaved
         self.language = language
     }
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         modelProvider = try container.decodeIfPresent(ModelProvider.self, forKey: .modelProvider) ?? .customEndpoint
-        endpointURL = try container.decode(String.self, forKey: .endpointURL)
+        endpointURL = try container.decodeIfPresent(String.self, forKey: .endpointURL) ?? Self.defaults.endpointURL
         apiKey = try container.decodeIfPresent(String.self, forKey: .apiKey) ?? ""
         githubOAuthToken = try container.decodeIfPresent(String.self, forKey: .githubOAuthToken) ?? ""
         githubAccountLogin = try container.decodeIfPresent(String.self, forKey: .githubAccountLogin) ?? ""
-        selectedModel = try container.decode(String.self, forKey: .selectedModel)
-        systemPrompt = try container.decode(String.self, forKey: .systemPrompt)
-        rewriteMode = try container.decode(RewriteMode.self, forKey: .rewriteMode)
-        hotkey = try container.decode(HotkeyConfig.self, forKey: .hotkey)
+        selectedModel = try container.decodeIfPresent(String.self, forKey: .selectedModel) ?? Self.defaults.selectedModel
+        systemPrompt = try container.decodeIfPresent(String.self, forKey: .systemPrompt) ?? Self.defaults.systemPrompt
+        rewriteMode = try container.decodeIfPresent(RewriteMode.self, forKey: .rewriteMode) ?? Self.defaults.rewriteMode
+        hotkey = try container.decodeIfPresent(HotkeyConfig.self, forKey: .hotkey) ?? Self.defaults.hotkey
         previewEnabled = try container.decodeIfPresent(Bool.self, forKey: .previewEnabled) ?? false
         dictationHotkey = try container.decodeIfPresent(HotkeyConfig.self, forKey: .dictationHotkey) ?? .defaultControlD
         whisperModel = try container.decodeIfPresent(String.self, forKey: .whisperModel) ?? "base"
         whisperMetalAccelerationEnabled = try container.decodeIfPresent(Bool.self, forKey: .whisperMetalAccelerationEnabled) ?? true
-        statusBarIconEnabled = try container.decodeIfPresent(Bool.self, forKey: .statusBarIconEnabled) ?? true
-        statusBarIconPreferenceSaved = try container.decodeIfPresent(Bool.self, forKey: .statusBarIconPreferenceSaved) ?? false
+        floatingIconEnabled = try container.decodeIfPresent(Bool.self, forKey: .floatingIconEnabled) ?? true
+        floatingIconPreferenceSaved = try container.decodeIfPresent(Bool.self, forKey: .floatingIconPreferenceSaved) ?? false
         language = try container.decodeIfPresent(AppLanguage.self, forKey: .language) ?? .zhHans
     }
 
@@ -493,8 +495,8 @@ struct AppConfig: Codable {
         dictationHotkey: .defaultControlD,
         whisperModel: "base",
         whisperMetalAccelerationEnabled: true,
-        statusBarIconEnabled: true,
-        statusBarIconPreferenceSaved: false,
+        floatingIconEnabled: true,
+        floatingIconPreferenceSaved: false,
         language: .zhHans
     )
 }

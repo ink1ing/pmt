@@ -60,7 +60,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func bindFloatingIconSetting() {
-        store.$statusBarIconEnabled
+        store.$floatingIconEnabled
             .removeDuplicates()
             .sink { [weak self] _ in
                 self?.updateFloatingIcon()
@@ -78,7 +78,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func updateFloatingIcon() {
-        if !store.statusBarIconEnabled {
+        if !store.floatingIconEnabled {
             floatingIcon?.hide()
             store.floatingIconVisible = false
             return

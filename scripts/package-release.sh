@@ -18,6 +18,22 @@ APPCAST_URL_PREFIX="https://github.com/ink1ing/pmt/releases/download/v${VERSION}
 ZIP_NAME="PMT-${VERSION}.zip"
 DMG_NAME="PMT-${VERSION}.dmg"
 
+if ! grep -Fq "Version: \`v${VERSION}\`" "$ROOT_DIR/README.md"; then
+  echo "README.md version does not match v${VERSION}" >&2
+  exit 1
+fi
+
+if ! grep -Fq "版本：\`v${VERSION}\`" "$ROOT_DIR/README.zh-CN.md"; then
+  echo "README.zh-CN.md version does not match v${VERSION}" >&2
+  exit 1
+fi
+
+if grep -REn 'PMT/[0-9]+\.[0-9]+\.[0-9]+' "$ROOT_DIR/Sources" >/dev/null; then
+  echo "Hard-coded PMT version user agent found under Sources" >&2
+  grep -REn 'PMT/[0-9]+\.[0-9]+\.[0-9]+' "$ROOT_DIR/Sources" >&2
+  exit 1
+fi
+
 mkdir -p "$ARCHIVE_DIR" "$DOWNLOAD_DIR"
 
 PMT_VERSION="$VERSION" PMT_BUILD="$BUILD" "$ROOT_DIR/scripts/build-app.sh"

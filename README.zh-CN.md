@@ -1,6 +1,6 @@
 # PMT
 
-版本：`v0.0.89`
+版本：`v0.0.91`
 
 [English README](./README.md)
 
@@ -75,13 +75,13 @@ https://raw.githubusercontent.com/ink1ing/pmt/main/appcast.xml
 构建 Sparkle 更新 ZIP、用户下载用 DMG，并重新生成 Sparkle appcast：
 
 ```sh
-scripts/package-release.sh 0.0.89 89
+scripts/package-release.sh 0.0.91 91
 ```
 
 然后将两个文件都上传到对应的 GitHub Release tag：
 
-- `release/appcast/PMT-0.0.89.zip`：用于 Sparkle App 内更新。
-- `release/downloads/PMT-0.0.89.dmg`：用于普通用户下载安装。
+- `release/appcast/PMT-0.0.91.zip`：用于 Sparkle App 内更新。
+- `release/downloads/PMT-0.0.91.dmg`：用于普通用户下载安装。
 
 最后提交并推送生成的 `appcast.xml`。
 
@@ -117,4 +117,4 @@ https://api.openai.com/v1
 
 ## 当前状态
 
-`v0.0.89` 将顶部状态栏图标替换为屏幕悬浮图标，优化模型配置布局，并修复 Whisper 模型准备时删除模型不会立即停止进度的问题。
+`v0.0.91` 提升配置升级兼容性，移除未使用的钥匙串代码，增加显式退出按钮，并移除 GitHub 请求中的硬编码应用版本。

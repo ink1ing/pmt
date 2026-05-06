@@ -1,6 +1,6 @@
 # PMT
 
-Version: `v0.0.89`
+Version: `v0.0.91`
 
 [中文说明](./README.zh-CN.md)
 
@@ -73,13 +73,13 @@ https://raw.githubusercontent.com/ink1ing/pmt/main/appcast.xml
 To build a Sparkle update ZIP, a user-facing DMG, and regenerate the Sparkle appcast:
 
 ```sh
-scripts/package-release.sh 0.0.89 89
+scripts/package-release.sh 0.0.91 91
 ```
 
 Upload both files to the matching GitHub release tag:
 
-- `release/appcast/PMT-0.0.89.zip`: used by Sparkle in-app updates.
-- `release/downloads/PMT-0.0.89.dmg`: user-facing installer download.
+- `release/appcast/PMT-0.0.91.zip`: used by Sparkle in-app updates.
+- `release/downloads/PMT-0.0.91.dmg`: user-facing installer download.
 
 Then commit and push the generated `appcast.xml`.
 
@@ -115,4 +115,4 @@ Custom gateways and local providers are supported as long as they expose compati
 
 ## Status
 
-`v0.0.89` replaces the status bar item with a floating screen icon, refines the model configuration layout, and fixes Whisper model deletion so preparation progress stops immediately.
+`v0.0.91` improves configuration upgrade resilience, removes dead Keychain code, adds an explicit Quit button, and removes hard-coded app version usage from GitHub requests.

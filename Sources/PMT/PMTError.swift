@@ -7,7 +7,6 @@ enum PMTError: LocalizedError {
     case missingModel
     case invalidEndpoint
     case api(String)
-    case keychain(String)
     case clipboard(String)
 
     var errorDescription: String? {
@@ -23,8 +22,6 @@ enum PMTError: LocalizedError {
         case .invalidEndpoint:
             "端点 URL 无效。"
         case .api(let message):
-            message
-        case .keychain(let message):
             message
         case .clipboard(let message):
             message

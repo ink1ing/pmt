@@ -3,20 +3,22 @@
     <channel>
         <title>PMT</title>
         <item>
-            <title>0.0.89</title>
-            <pubDate>Wed, 06 May 2026 16:08:44 +0800</pubDate>
+            <title>0.0.91</title>
+            <pubDate>Wed, 06 May 2026 18:43:12 +0800</pubDate>
             <link>https://github.com/ink1ing/pmt</link>
-            <sparkle:version>89</sparkle:version>
-            <sparkle:shortVersionString>0.0.89</sparkle:shortVersionString>
+            <sparkle:version>91</sparkle:version>
+            <sparkle:shortVersionString>0.0.91</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-            <description sparkle:format="markdown"><![CDATA[# PMT 0.0.89
+            <description sparkle:format="markdown"><![CDATA[# PMT 0.0.91
 
-- 将顶部状态栏图标替换为屏幕悬浮 🤔 图标：单击改写，右键打开控制面板，长按拖动位置。
-- 优化模型配置区布局：账号信息前置，授权与退出右对齐，模型选择压缩为两行。
-- 修复 Whisper 模型准备期间点击删除模型时进度不会立即停止的问题；准备完成后进度条会自动收起。
+- Improve configuration upgrade resilience so missing older config fields no longer reset the whole config.
+- Remove unused Keychain code now that API credentials are stored through PMT configuration.
+- Add an explicit Quit button next to Save.
+- Use the app bundle version for GitHub request User-Agent values instead of a hard-coded version.
+- Add release preflight checks for README version drift and hard-coded PMT user agents.
 ]]></description>
-            <enclosure url="https://github.com/ink1ing/pmt/releases/download/v0.0.89/PMT-0.0.89.zip" length="4285729" type="application/octet-stream" sparkle:edSignature="w147dDbII5zaLTs65aiK7r1qlwPVMrEt2CLnEgH825vfseGma+CjDbyXp38ef5GHur0hUdcCAhLmyksExmw9DA=="/>
+            <enclosure url="https://github.com/ink1ing/pmt/releases/download/v0.0.91/PMT-0.0.91.zip" length="4286382" type="application/octet-stream" sparkle:edSignature="eLuIjeqGsMeyvmIRpjM97CU1dIZXype0M/djLQP2XpD9wJSgFoLPtg/q7UvAxSvweOahM7l6PXW5YEaPcCuTAA=="/>
         </item>
     </channel>
 </rss>

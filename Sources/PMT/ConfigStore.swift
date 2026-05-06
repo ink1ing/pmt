@@ -32,8 +32,8 @@ final class ConfigStore: ObservableObject {
     @Published var whisperDownloadProgress: Double = 0
     @Published var whisperPreparationProgress: Double = 0
     @Published var whisperPreparationStatus: String = ""
-    @Published var statusBarIconEnabled: Bool
-    @Published var statusBarIconPreferenceSaved: Bool
+    @Published var floatingIconEnabled: Bool
+    @Published var floatingIconPreferenceSaved: Bool
     @Published var floatingIconVisible = false
     @Published var language: AppLanguage
     @Published var availableModels: [String] = []
@@ -95,9 +95,9 @@ final class ConfigStore: ObservableObject {
         whisperModel = config.whisperModel
         whisperMetalAccelerationEnabled = true
         let shouldMigrateFloatingIcon = defaults.object(forKey: floatingIconMigrationKey) == nil
-        let shouldRestoreDefaultFloatingIcon = !config.statusBarIconPreferenceSaved || shouldMigrateFloatingIcon
-        statusBarIconEnabled = shouldRestoreDefaultFloatingIcon ? true : config.statusBarIconEnabled
-        statusBarIconPreferenceSaved = config.statusBarIconPreferenceSaved
+        let shouldRestoreDefaultFloatingIcon = !config.floatingIconPreferenceSaved || shouldMigrateFloatingIcon
+        floatingIconEnabled = shouldRestoreDefaultFloatingIcon ? true : config.floatingIconEnabled
+        floatingIconPreferenceSaved = config.floatingIconPreferenceSaved
         language = config.language
         if shouldMigrateFloatingIcon {
             defaults.set(true, forKey: floatingIconMigrationKey)
@@ -119,7 +119,7 @@ final class ConfigStore: ObservableObject {
             addLog("已将旧默认快捷键迁移为 Ctrl + X")
         }
 
-        if shouldRestoreDefaultFloatingIcon, !config.statusBarIconEnabled {
+        if shouldRestoreDefaultFloatingIcon, !config.floatingIconEnabled {
             saveConfig()
             addLog("已恢复悬浮图标默认开启")
         }
@@ -140,8 +140,8 @@ final class ConfigStore: ObservableObject {
             dictationHotkey: dictationHotkey,
             whisperModel: whisperModel,
             whisperMetalAccelerationEnabled: whisperMetalAccelerationEnabled,
-            statusBarIconEnabled: statusBarIconEnabled,
-            statusBarIconPreferenceSaved: statusBarIconPreferenceSaved,
+            floatingIconEnabled: floatingIconEnabled,
+            floatingIconPreferenceSaved: floatingIconPreferenceSaved,
             language: language
         )
     }

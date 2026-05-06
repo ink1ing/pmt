@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 struct SettingsView: View {
@@ -25,9 +26,7 @@ struct SettingsView: View {
         !store.hotkey.displayName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
     private var appVersion: String {
-        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
-        let normalized = version?.trimmingCharacters(in: .whitespacesAndNewlines)
-        return normalized?.isEmpty == false ? "v\(normalized!)" : "v0.0.84"
+        AppInfo.displayVersion
     }
     private var readinessText: String {
         if language == .zhHans {
@@ -266,6 +265,10 @@ struct SettingsView: View {
                     store.saveAllSections()
                     onSave()
                 }
+                Button(language.text(.quitApp)) {
+                    store.saveConfig()
+                    NSApp.terminate(nil)
+                }
             }
 
             if store.showLogs {
@@ -360,10 +363,10 @@ struct SettingsView: View {
 
     private var otherFeaturesSection: some View {
         HStack(alignment: .center, spacing: 10) {
-            Toggle(language.text(.showStatusBarIcon), isOn: $store.statusBarIconEnabled)
+            Toggle(language.text(.showStatusBarIcon), isOn: $store.floatingIconEnabled)
                 .toggleStyle(.checkbox)
-                .onChange(of: store.statusBarIconEnabled) {
-                    store.statusBarIconPreferenceSaved = true
+                .onChange(of: store.floatingIconEnabled) {
+                    store.floatingIconPreferenceSaved = true
                     store.saveConfig()
                     onSave()
                 }
