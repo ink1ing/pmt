@@ -1,6 +1,6 @@
 # PMT
 
-Version: `v0.0.87`
+Version: `v0.0.89`
 
 [中文说明](./README.zh-CN.md)
 
@@ -35,7 +35,8 @@ Short dictation snippets are inserted directly without model rewriting.
 - Two-step dictation flow: local speech transcription, then remote model structured rewriting.
 - Stage indicators for dictation and model processing.
 - Start and stop dictation sounds.
-- Optional status bar icon and updated application icon.
+- Optional floating 🤔 icon: click to rewrite the current text field, right-click to open the settings panel, and long-press to drag.
+- The floating icon is enabled once during this version migration and can then be disabled and saved from the panel.
 - Local action log for hotkeys, permissions, model requests, and rewrite results.
 - Chinese and English interface switching.
 - In-app update checking and installation through Sparkle.
@@ -72,13 +73,13 @@ https://raw.githubusercontent.com/ink1ing/pmt/main/appcast.xml
 To build a Sparkle update ZIP, a user-facing DMG, and regenerate the Sparkle appcast:
 
 ```sh
-scripts/package-release.sh 0.0.87 87
+scripts/package-release.sh 0.0.89 89
 ```
 
 Upload both files to the matching GitHub release tag:
 
-- `release/appcast/PMT-0.0.87.zip`: used by Sparkle in-app updates.
-- `release/downloads/PMT-0.0.87.dmg`: user-facing installer download.
+- `release/appcast/PMT-0.0.89.zip`: used by Sparkle in-app updates.
+- `release/downloads/PMT-0.0.89.dmg`: user-facing installer download.
 
 Then commit and push the generated `appcast.xml`.
 
@@ -114,4 +115,4 @@ Custom gateways and local providers are supported as long as they expose compati
 
 ## Status
 
-`v0.0.87` simplifies permission status feedback, shows the app version in readiness status, updates the usage wording, and stabilizes ad-hoc code signing so future updates do not repeatedly invalidate macOS permissions.
+`v0.0.89` replaces the status bar item with a floating screen icon, refines the model configuration layout, and fixes Whisper model deletion so preparation progress stops immediately.

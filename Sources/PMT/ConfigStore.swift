@@ -34,6 +34,7 @@ final class ConfigStore: ObservableObject {
     @Published var whisperPreparationStatus: String = ""
     @Published var statusBarIconEnabled: Bool
     @Published var statusBarIconPreferenceSaved: Bool
+    @Published var floatingIconVisible = false
     @Published var language: AppLanguage
     @Published var availableModels: [String] = []
     @Published var statusMessage: String = ""
@@ -45,6 +46,7 @@ final class ConfigStore: ObservableObject {
     private let logsKey = "PMT.logs"
     private let defaults: UserDefaults
     private let maxLogCount = 120
+    private let floatingIconMigrationKey = "PMT.floatingIconMigration.v1"
 
     private static let configSuiteName = "dev.pmt.PMT.shared"
     private static let legacyConfigSuiteName = "dev.pmt.PMT"
@@ -92,10 +94,14 @@ final class ConfigStore: ObservableObject {
         dictationHotkey = config.dictationHotkey
         whisperModel = config.whisperModel
         whisperMetalAccelerationEnabled = true
-        let shouldRestoreDefaultStatusIcon = !config.statusBarIconPreferenceSaved
-        statusBarIconEnabled = shouldRestoreDefaultStatusIcon ? true : config.statusBarIconEnabled
+        let shouldMigrateFloatingIcon = defaults.object(forKey: floatingIconMigrationKey) == nil
+        let shouldRestoreDefaultFloatingIcon = !config.statusBarIconPreferenceSaved || shouldMigrateFloatingIcon
+        statusBarIconEnabled = shouldRestoreDefaultFloatingIcon ? true : config.statusBarIconEnabled
         statusBarIconPreferenceSaved = config.statusBarIconPreferenceSaved
         language = config.language
+        if shouldMigrateFloatingIcon {
+            defaults.set(true, forKey: floatingIconMigrationKey)
+        }
 
         if let data = defaults.data(forKey: logsKey),
            let decoded = try? JSONDecoder().decode([LogEntry].self, from: data) {
@@ -113,9 +119,9 @@ final class ConfigStore: ObservableObject {
             addLog("已将旧默认快捷键迁移为 Ctrl + X")
         }
 
-        if shouldRestoreDefaultStatusIcon, !config.statusBarIconEnabled {
+        if shouldRestoreDefaultFloatingIcon, !config.statusBarIconEnabled {
             saveConfig()
-            addLog("已恢复顶部图标默认开启")
+            addLog("已恢复悬浮图标默认开启")
         }
     }
 

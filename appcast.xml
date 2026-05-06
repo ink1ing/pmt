@@ -3,21 +3,20 @@
     <channel>
         <title>PMT</title>
         <item>
-            <title>0.0.87</title>
-            <pubDate>Wed, 06 May 2026 11:58:38 +0800</pubDate>
+            <title>0.0.89</title>
+            <pubDate>Wed, 06 May 2026 16:08:44 +0800</pubDate>
             <link>https://github.com/ink1ing/pmt</link>
-            <sparkle:version>87</sparkle:version>
-            <sparkle:shortVersionString>0.0.87</sparkle:shortVersionString>
+            <sparkle:version>89</sparkle:version>
+            <sparkle:shortVersionString>0.0.89</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-            <description sparkle:format="markdown"><![CDATA[# PMT 0.0.87
+            <description sparkle:format="markdown"><![CDATA[# PMT 0.0.89
 
-- 简化权限检查返回：都未开启、辅助功能未开启、输入监控未开启、都已开启。
-- 顶部就绪状态增加当前 App 版本号。
-- 使用说明第三步改为“选中文字并改写”。
-- 稳定 ad-hoc 签名身份，避免后续更新反复触发 macOS 权限重授。
+- 将顶部状态栏图标替换为屏幕悬浮 🤔 图标：单击改写，右键打开控制面板，长按拖动位置。
+- 优化模型配置区布局：账号信息前置，授权与退出右对齐，模型选择压缩为两行。
+- 修复 Whisper 模型准备期间点击删除模型时进度不会立即停止的问题；准备完成后进度条会自动收起。
 ]]></description>
-            <enclosure url="https://github.com/ink1ing/pmt/releases/download/v0.0.87/PMT-0.0.87.zip" length="4274398" type="application/octet-stream" sparkle:edSignature="EZgY3jDMSMD7SIg+t1QMuEzWKGv/jZwIAKJmqp2eGfAIvwuxuSsKWI3Yd4BddSQRdk++maMliwFoQjHNXFVJAQ=="/>
+            <enclosure url="https://github.com/ink1ing/pmt/releases/download/v0.0.89/PMT-0.0.89.zip" length="4285729" type="application/octet-stream" sparkle:edSignature="w147dDbII5zaLTs65aiK7r1qlwPVMrEt2CLnEgH825vfseGma+CjDbyXp38ef5GHur0hUdcCAhLmyksExmw9DA=="/>
         </item>
     </channel>
 </rss>

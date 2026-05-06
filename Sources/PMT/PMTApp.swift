@@ -5,7 +5,7 @@ import SwiftUI
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let store = ConfigStore()
-    private var statusItem: NSStatusItem?
+    private var floatingIcon: FloatingRewriteIcon?
     private var settingsWindow: NSWindow?
     private var rewriter: SelectionRewriter?
     private var dictationWorkflow: DictationWorkflow?
@@ -24,6 +24,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         rewriter = SelectionRewriter(store: store)
         dictationWorkflow = DictationWorkflow(store: store)
         frontmostAppTracker = FrontmostAppTracker(store: store)
+        floatingIcon = FloatingRewriteIcon(
+            onRewrite: { [weak self] in
+                self?.rewriteFromFloatingIcon()
+            },
+            onOpenSettings: { [weak self] in
+                self?.showSettings()
+            }
+        )
         hotkeyMonitor = GlobalHotkeyMonitor(
             store: store,
             onRewriteTrigger: { [weak self] targetApplication in
@@ -37,8 +45,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
         hotkeyMonitor?.start()
 
-        bindStatusBarIconSetting()
-        ensureStatusBarIcon(retryDelays: [0.1, 0.5, 1.5])
+        bindFloatingIconSetting()
+        ensureFloatingIcon(retryDelays: [0.1, 0.5, 1.5])
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
             self?.showSettings()
         }
@@ -51,67 +59,33 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         store.saveConfig()
     }
 
-    private func bindStatusBarIconSetting() {
+    private func bindFloatingIconSetting() {
         store.$statusBarIconEnabled
             .removeDuplicates()
             .sink { [weak self] _ in
-                self?.updateStatusBarIcon()
+                self?.updateFloatingIcon()
             }
             .store(in: &cancellables)
     }
 
-    private func ensureStatusBarIcon(retryDelays delays: [TimeInterval]) {
-        updateStatusBarIcon()
+    private func ensureFloatingIcon(retryDelays delays: [TimeInterval]) {
+        updateFloatingIcon()
         for delay in delays {
             DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
-                self?.updateStatusBarIcon()
+                self?.updateFloatingIcon()
             }
         }
     }
 
-    private func updateStatusBarIcon() {
+    private func updateFloatingIcon() {
         if !store.statusBarIconEnabled {
-            if let statusItem {
-                NSStatusBar.system.removeStatusItem(statusItem)
-                self.statusItem = nil
-            }
+            floatingIcon?.hide()
+            store.floatingIconVisible = false
             return
         }
 
-        if statusItem?.button == nil {
-            if let statusItem {
-                NSStatusBar.system.removeStatusItem(statusItem)
-            }
-            statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-        }
-
-        guard let item = statusItem, let button = item.button else {
-            store.addLog("状态栏图标创建失败：未获得状态栏按钮")
-            return
-        }
-
-        item.length = NSStatusItem.squareLength
-        button.imagePosition = .imageOnly
-        button.title = ""
-        if let image = NSImage(systemSymbolName: "text.badge.star", accessibilityDescription: "PMT") {
-            image.isTemplate = true
-            image.size = NSSize(width: 16, height: 16)
-            button.image = image
-        } else {
-            button.image = nil
-            button.title = "PMT"
-            button.imagePosition = .noImage
-            item.length = NSStatusItem.variableLength
-        }
-        button.toolTip = "PMT"
-
-        let menu = NSMenu()
-        menu.addItem(NSMenuItem(title: "设置", action: #selector(openSettings), keyEquivalent: ","))
-        menu.addItem(NSMenuItem(title: "立即改写选中文本", action: #selector(rewriteNow), keyEquivalent: "r"))
-        menu.addItem(NSMenuItem(title: "检查更新", action: #selector(checkForUpdates), keyEquivalent: "u"))
-        menu.addItem(.separator())
-        menu.addItem(NSMenuItem(title: "退出", action: #selector(quit), keyEquivalent: "q"))
-        item.menu = menu
+        floatingIcon?.show()
+        store.floatingIconVisible = floatingIcon?.isVisible == true
     }
 
     @objc private func openSettings() {
@@ -120,12 +94,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func rewriteNow() {
         let targetApplication = frontmostAppTracker?.lastExternalApplication
-        store.addLog("通过状态栏菜单触发改写，目标：\(FrontmostAppTracker.displayName(for: targetApplication))")
+        store.addLog("通过菜单触发改写，目标：\(FrontmostAppTracker.displayName(for: targetApplication))")
+        rewriter?.rewriteSelection(targetApplication: targetApplication)
+    }
+
+    private func rewriteFromFloatingIcon() {
+        let targetApplication = frontmostAppTracker?.currentExternalApplication()
+        store.addLog("通过悬浮图标触发改写，目标：\(FrontmostAppTracker.displayName(for: targetApplication))")
         rewriter?.rewriteSelection(targetApplication: targetApplication)
     }
 
     @objc private func checkForUpdates() {
-        store.addLog("通过状态栏菜单检查更新")
+        store.addLog("检查更新")
         updateManager.checkForUpdates()
     }
 
@@ -144,7 +124,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let view = SettingsView(store: store, dictationWorkflow: dictationWorkflow) { [weak self] in
             self?.hotkeyMonitor?.start()
-            self?.updateStatusBarIcon()
+            self?.updateFloatingIcon()
         }
         let controller = NSHostingController(rootView: view)
         let window = NSWindow(contentViewController: controller)

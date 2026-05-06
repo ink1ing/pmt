@@ -1,6 +1,6 @@
 # PMT
 
-版本：`v0.0.87`
+版本：`v0.0.89`
 
 [English README](./README.md)
 
@@ -37,7 +37,8 @@ PMT 是一个轻量的 macOS 原生应用，目标是在任意输入框中，通
 - 支持语音录入和模型改写的两步工作流。
 - 听写和模型处理阶段提供不同的旋转状态 icon。
 - 支持开始录音和结束录音提示音。
-- 支持顶部状态栏图标，并更新了应用 icon。
+- 支持屏幕悬浮 🤔 图标：单击改写当前输入域文字，右键打开控制面板，长按拖动位置。
+- 悬浮图标会在本版本迁移后默认开启一次，之后可在面板内关闭并保存。
 - 面板内置日志，可查看热键、权限、模型请求和改写结果。
 - 支持中英文界面切换。
 - 支持通过 Sparkle 在 App 内检查并安装更新。
@@ -74,13 +75,13 @@ https://raw.githubusercontent.com/ink1ing/pmt/main/appcast.xml
 构建 Sparkle 更新 ZIP、用户下载用 DMG，并重新生成 Sparkle appcast：
 
 ```sh
-scripts/package-release.sh 0.0.87 87
+scripts/package-release.sh 0.0.89 89
 ```
 
 然后将两个文件都上传到对应的 GitHub Release tag：
 
-- `release/appcast/PMT-0.0.87.zip`：用于 Sparkle App 内更新。
-- `release/downloads/PMT-0.0.87.dmg`：用于普通用户下载安装。
+- `release/appcast/PMT-0.0.89.zip`：用于 Sparkle App 内更新。
+- `release/downloads/PMT-0.0.89.dmg`：用于普通用户下载安装。
 
 最后提交并推送生成的 `appcast.xml`。
 
@@ -116,4 +117,4 @@ https://api.openai.com/v1
 
 ## 当前状态
 
-`v0.0.87` 简化了权限检查返回，顶部就绪状态增加应用版本号，更新了使用说明文案，并稳定 ad-hoc 签名身份，避免后续更新反复触发 macOS 权限重授。
+`v0.0.89` 将顶部状态栏图标替换为屏幕悬浮图标，优化模型配置布局，并修复 Whisper 模型准备时删除模型不会立即停止进度的问题。

@@ -8,7 +8,9 @@ struct SettingsView: View {
     private var language: AppLanguage { store.language }
     private let controlWidth: CGFloat = 240
     private let hotkeyControlWidth: CGFloat = 60
-    private let modelColumnWidth: CGFloat = 240
+    private let modelProviderWidth: CGFloat = 142
+    private let modelPickerWidth: CGFloat = 168
+    private let modelActionButtonWidth: CGFloat = 82
     private var isAppReady: Bool {
         hasRequiredPermissions && hasModelCredential && hasBoundHotkey
     }
@@ -76,42 +78,24 @@ struct SettingsView: View {
 
     private var apiSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack {
+            HStack(alignment: .center, spacing: 10) {
                 Text(language.text(.api))
                     .font(.headline)
-                Spacer(minLength: 12)
-                Picker("", selection: $store.modelProvider) {
-                    ForEach(ModelProvider.allCases) { provider in
-                        Text(provider.title(language: language)).tag(provider)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .frame(width: controlWidth)
-            }
-            .frame(maxWidth: .infinity, alignment: .trailing)
-            HStack(alignment: .top, spacing: 16) {
-                modelProviderLeftColumn
-                .frame(maxWidth: .infinity)
+                    .frame(minWidth: 48, alignment: .leading)
+                if store.modelProvider == .customEndpoint {
+                    TextField(language.text(.endpointURL), text: $store.endpointURL)
+                        .textFieldStyle(.roundedBorder)
+                        .frame(maxWidth: .infinity)
+                    SecureField(language.text(.apiKey), text: $store.apiKey)
+                        .textFieldStyle(.roundedBorder)
+                        .frame(maxWidth: .infinity)
+                } else {
+                    Text("\(language.text(.currentAccount))：\(store.githubAccountLogin.isEmpty ? language.text(.notAuthorized) : store.githubAccountLogin)")
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                        .frame(maxWidth: .infinity, alignment: .leading)
 
-                modelPickerColumn
-            }
-        }
-        .disabled(store.isBusy)
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    @ViewBuilder
-    private var modelProviderLeftColumn: some View {
-        if store.modelProvider == .customEndpoint {
-            VStack(alignment: .leading, spacing: 10) {
-                TextField(language.text(.endpointURL), text: $store.endpointURL)
-                    .textFieldStyle(.roundedBorder)
-                SecureField(language.text(.apiKey), text: $store.apiKey)
-                    .textFieldStyle(.roundedBorder)
-            }
-        } else {
-            VStack(alignment: .leading, spacing: 10) {
-                HStack(spacing: 8) {
                     Button(language.text(.requestAuthorization)) {
                         Task { await store.authorizeGitHubCopilot() }
                     }
@@ -122,45 +106,47 @@ struct SettingsView: View {
                     }
                     .disabled(!hasGitHubAccount)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            HStack(alignment: .center, spacing: 10) {
+                Spacer(minLength: 0)
+                Picker("", selection: $store.modelProvider) {
+                    ForEach(ModelProvider.allCases) { provider in
+                        Text(provider.title(language: language)).tag(provider)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .frame(width: modelProviderWidth)
 
-                Text("\(language.text(.currentAccount))：\(store.githubAccountLogin.isEmpty ? language.text(.notAuthorized) : store.githubAccountLogin)")
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                    .truncationMode(.middle)
+                Picker("", selection: $store.selectedModel) {
+                    if store.selectedModel.isEmpty {
+                        Text(language.text(.unselected)).tag("")
+                    }
+                    ForEach(store.availableModels, id: \.self) { model in
+                        Text(model).tag(model)
+                    }
+                    if !store.selectedModel.isEmpty, !store.availableModels.contains(store.selectedModel) {
+                        Text(store.selectedModel).tag(store.selectedModel)
+                    }
+                }
+                .labelsHidden()
+                .frame(width: modelPickerWidth, alignment: .trailing)
+
+                Button(language.text(.loadModels)) {
+                    Task { await store.loadModels() }
+                }
+                .frame(width: modelActionButtonWidth)
+                Button(language.text(.testModel)) {
+                    Task { await store.testConnection() }
+                }
+                .frame(width: modelActionButtonWidth)
             }
         }
+        .disabled(store.isBusy)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var hasGitHubAccount: Bool {
         !store.githubAccountLogin.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-    }
-
-    private var modelPickerColumn: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Picker(language.text(.currentModel), selection: $store.selectedModel) {
-                if store.selectedModel.isEmpty {
-                    Text(language.text(.unselected)).tag("")
-                }
-                ForEach(store.availableModels, id: \.self) { model in
-                    Text(model).tag(model)
-                }
-                if !store.selectedModel.isEmpty, !store.availableModels.contains(store.selectedModel) {
-                    Text(store.selectedModel).tag(store.selectedModel)
-                }
-            }
-            .frame(width: modelColumnWidth, alignment: .trailing)
-            HStack {
-                Spacer(minLength: 0)
-                Button(language.text(.loadModels)) {
-                    Task { await store.loadModels() }
-                }
-                Button(language.text(.testModel)) {
-                    Task { await store.testConnection() }
-                }
-            }
-        }
-        .frame(width: modelColumnWidth, alignment: .trailing)
     }
 
     private var promptAndHotkeySection: some View {

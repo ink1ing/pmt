@@ -13,6 +13,8 @@ final class DictationWorkflow {
     private var targetApplication: NSRunningApplication?
     private let recorder = DictationRecorder()
     private let transcriber: LocalWhisperTranscriber
+    private var preparationTask: Task<Void, Never>?
+    private var preparationRunID = UUID()
 
     init(store: ConfigStore) {
         self.store = store
@@ -47,7 +49,11 @@ final class DictationWorkflow {
             return
         }
 
-        Task {
+        preparationTask?.cancel()
+        let runID = UUID()
+        preparationRunID = runID
+        preparationTask = Task { [weak self] in
+            guard let self else { return }
             do {
                 updatePreparationProgress(
                     status: store.language == .zhHans ? "开始准备 Whisper 模型..." : "Preparing Whisper model...",
@@ -60,18 +66,25 @@ final class DictationWorkflow {
                     metalAccelerationEnabled: store.whisperMetalAccelerationEnabled
                 ) { [weak self] progress in
                     Task { @MainActor in
+                        guard self?.preparationRunID == runID else { return }
                         self?.updatePreparationProgress(progress)
                     }
                 }
+                try Task.checkCancellation()
+                guard preparationRunID == runID else { return }
                 store.whisperModelStatus = store.language == .zhHans ? "已准备" : "Ready"
-                updatePreparationProgress(
-                    status: store.language == .zhHans ? "模型已准备完成" : "Model is ready",
-                    download: 1,
-                    preparation: 1
-                )
+                clearPreparationProgress()
                 store.statusMessage = store.language == .zhHans ? "Whisper 模型已准备" : "Whisper model is ready"
                 store.addLog(store.statusMessage)
+                preparationTask = nil
+            } catch is CancellationError {
+                guard preparationRunID == runID else { return }
+                clearPreparationProgress()
+                store.whisperModelStatus = store.language == .zhHans ? "未准备" : "Not ready"
+                store.addLog(store.language == .zhHans ? "Whisper 模型准备已取消" : "Whisper model preparation canceled")
+                preparationTask = nil
             } catch {
+                guard preparationRunID == runID else { return }
                 store.whisperModelStatus = store.language == .zhHans ? "准备失败" : "Preparation failed"
                 updatePreparationProgress(
                     status: store.language == .zhHans ? "模型准备失败" : "Model preparation failed",
@@ -81,6 +94,7 @@ final class DictationWorkflow {
                 store.statusMessage = error.localizedDescription
                 store.addLog("Whisper 模型准备失败：\(error.localizedDescription)")
                 Notifier.shared.error(error.localizedDescription)
+                preparationTask = nil
             }
         }
     }
@@ -91,23 +105,21 @@ final class DictationWorkflow {
             return
         }
 
+        preparationTask?.cancel()
+        preparationTask = nil
+        preparationRunID = UUID()
+        clearPreparationProgress()
+
         Task {
             do {
-                updatePreparationProgress(
-                    status: store.language == .zhHans ? "正在删除模型..." : "Deleting model...",
-                    download: 0,
-                    preparation: 0
-                )
                 let removedCount = try await transcriber.deleteModel(store.whisperModel)
                 store.whisperModelStatus = store.language == .zhHans ? "未准备" : "Not ready"
-                store.whisperDownloadProgress = 0
-                store.whisperPreparationProgress = 0
-                store.whisperPreparationStatus = store.language == .zhHans ? "模型已删除" : "Model deleted"
+                clearPreparationProgress()
                 store.statusMessage = store.language == .zhHans ? "已删除当前模型" : "Current model deleted"
                 store.addLog("\(store.statusMessage)：\(removedCount) 个目录")
             } catch {
                 store.statusMessage = error.localizedDescription
-                store.whisperPreparationStatus = store.language == .zhHans ? "模型删除失败" : "Model deletion failed"
+                clearPreparationProgress()
                 store.addLog("Whisper 模型删除失败：\(error.localizedDescription)")
                 Notifier.shared.error(error.localizedDescription)
             }
@@ -245,6 +257,12 @@ final class DictationWorkflow {
         store.whisperPreparationProgress = min(max(preparation, 0), 1)
     }
 
+    private func clearPreparationProgress() {
+        store.whisperPreparationStatus = ""
+        store.whisperDownloadProgress = 0
+        store.whisperPreparationProgress = 0
+    }
+
     private func localizedPreparationStatus(_ stage: WhisperPreparationStage) -> String {
         switch (store.language, stage) {
         case (.zhHans, .downloadStarting):
@@ -369,6 +387,7 @@ private actor LocalWhisperTranscriber {
         }
 
         let baseURL = try modelBaseURL()
+        try Task.checkCancellation()
         progressHandler?(WhisperPreparationProgress(stage: .downloadStarting, downloadProgress: 0, preparationProgress: 0))
         let modelFolder = try await WhisperKit.download(
             variant: model,
@@ -382,6 +401,7 @@ private actor LocalWhisperTranscriber {
                 )
             )
         }
+        try Task.checkCancellation()
         progressHandler?(WhisperPreparationProgress(stage: .downloaded, downloadProgress: 1, preparationProgress: 0))
 
         let computeOptions = ModelComputeOptions(
@@ -389,6 +409,7 @@ private actor LocalWhisperTranscriber {
             audioEncoderCompute: metalAccelerationEnabled ? .cpuAndGPU : .cpuOnly,
             textDecoderCompute: metalAccelerationEnabled ? .cpuAndGPU : .cpuOnly
         )
+        try Task.checkCancellation()
         progressHandler?(WhisperPreparationProgress(stage: .preparing, downloadProgress: 1, preparationProgress: 0.1))
         let kit = try await WhisperKit(
             downloadBase: baseURL,
@@ -399,8 +420,10 @@ private actor LocalWhisperTranscriber {
             load: false,
             download: false
         )
+        try Task.checkCancellation()
         progressHandler?(WhisperPreparationProgress(stage: .preparing, downloadProgress: 1, preparationProgress: 0.45))
         try await kit.loadModels()
+        try Task.checkCancellation()
         progressHandler?(WhisperPreparationProgress(stage: .ready, downloadProgress: 1, preparationProgress: 1))
         whisperKit = kit
         loadedModel = model
