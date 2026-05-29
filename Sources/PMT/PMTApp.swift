@@ -6,6 +6,7 @@ import SwiftUI
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let store = ConfigStore()
     private var floatingIcon: FloatingRewriteIcon?
+    private var statusBar: StatusBarController?
     private var settingsWindow: NSWindow?
     private var rewriter: SelectionRewriter?
     private var dictationWorkflow: DictationWorkflow?
@@ -25,6 +26,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         dictationWorkflow = DictationWorkflow(store: store)
         frontmostAppTracker = FrontmostAppTracker(store: store)
         floatingIcon = FloatingRewriteIcon(
+            onRewrite: { [weak self] in
+                self?.rewriteFromFloatingIcon()
+            },
+            onOpenSettings: { [weak self] in
+                self?.showSettings()
+            }
+        )
+        statusBar = StatusBarController(
+            store: store,
             onRewrite: { [weak self] in
                 self?.rewriteFromFloatingIcon()
             },

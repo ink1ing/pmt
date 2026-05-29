@@ -35,19 +35,27 @@ final class SelectionRewriter {
 
                 let snapshot = ClipboardSnapshot()
                 try await activateTargetApplication(targetApplication)
-                let selectedText = try await copySelectedText()
+                store.addLog("发送 Cmd+C 读取选中文本")
+                let selectedText = try await TextInjector.copySelection()
                 store.addLog("读取选中文本成功：\(selectedText.count) 个字符")
+                store.recordAdviceInput(selectedText, source: "rewrite")
                 store.addLog("开始请求模型：\(store.selectedModel.isEmpty ? "未选择模型" : store.selectedModel)")
-                let rewritten = try await store.rewrite(text: selectedText)
-                store.addLog("模型返回成功：\(rewritten.count) 个字符")
                 try await activateTargetApplication(targetApplication)
-                try paste(rewritten)
-                store.addLog("已粘贴替换文本")
 
-                Task { @MainActor in
-                    try? await Task.sleep(nanoseconds: 900_000_000)
+                if store.streamingEnabled {
                     snapshot.restore()
-                    store.addLog("已恢复原剪贴板")
+                    var count = 0
+                    for try await delta in try store.rewriteStream(text: selectedText) {
+                        TextInjector.typeText(delta)
+                        count += delta.count
+                    }
+                    store.addLog("流式输出完成：\(count) 个字符")
+                } else {
+                    let rewritten = try await store.rewrite(text: selectedText)
+                    store.addLog("模型返回成功：\(rewritten.count) 个字符")
+                    store.addLog("发送 Cmd+V 替换选中文本")
+                    try TextInjector.paste(rewritten, restoring: snapshot)
+                    store.addLog("已粘贴替换文本")
                 }
             } catch {
                 store.addLog("改写失败：\(error.localizedDescription)")
@@ -61,31 +69,6 @@ final class SelectionRewriter {
         guard AXIsProcessTrustedWithOptions(options) else {
             throw PMTError.accessibilityMissing
         }
-    }
-
-    private func copySelectedText() async throws -> String {
-        let pasteboard = NSPasteboard.general
-        pasteboard.clearContents()
-        store.addLog("发送 Cmd+C 读取选中文本")
-        Keyboard.pressCommandKey(8)
-        try await Task.sleep(nanoseconds: 220_000_000)
-
-        guard let selectedText = pasteboard.string(forType: .string)?
-            .trimmingCharacters(in: .whitespacesAndNewlines),
-              !selectedText.isEmpty else {
-            throw PMTError.noSelectedText
-        }
-        return selectedText
-    }
-
-    private func paste(_ text: String) throws {
-        let pasteboard = NSPasteboard.general
-        pasteboard.clearContents()
-        guard pasteboard.setString(text, forType: .string) else {
-            throw PMTError.clipboard("无法写入剪贴板。")
-        }
-        store.addLog("发送 Cmd+V 替换选中文本")
-        Keyboard.pressCommandKey(9)
     }
 
     private func activateTargetApplication(_ application: NSRunningApplication?) async throws {

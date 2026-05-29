@@ -38,6 +38,8 @@ Short dictation snippets are inserted directly without model rewriting.
 - Optional floating 🤔 icon: click to rewrite the current text field, right-click to open the settings panel, and long-press to drag.
 - The floating icon is enabled once during this version migration and can then be disabled and saved from the panel.
 - Local action log for hotkeys, permissions, model requests, and rewrite results.
+- Optional local advice report at `~/Documents/PMT/advice.md`, generated from PMT rewrite and dictation history.
+- Optional Telegram Bot delivery for the final advice summary.
 - Chinese and English interface switching.
 - In-app update checking and installation through Sparkle.
 
@@ -92,6 +94,22 @@ PMT needs these macOS permissions for the full workflow:
 - `Microphone`: record dictation audio when preview dictation is enabled.
 
 The settings panel includes checks and request actions for these permissions.
+
+## Privacy
+
+When advice generation is enabled, PMT records only the text handled inside PMT rewrite or dictation workflows. This history is stored locally at:
+
+```txt
+~/Library/Application Support/PMT/advice-history.jsonl
+```
+
+Advice generation is disabled by default. PMT does not create advice history while it is disabled. When enabled, PMT reads local history and sends the minimum necessary recent snippets to the model provider configured by the user, then writes a short summary to:
+
+```txt
+~/Documents/PMT/advice.md
+```
+
+Telegram is optional and only sends the final advice summary, not the raw local history.
 
 ## API Compatibility
 

@@ -4,6 +4,7 @@ import PackageDescription
 
 let package = Package(
     name: "PMT",
+    defaultLocalization: "en",
     platforms: [
         .macOS(.v14)
     ],
@@ -21,7 +22,10 @@ let package = Package(
                 .product(name: "Sparkle", package: "Sparkle"),
                 .product(name: "WhisperKit", package: "argmax-oss-swift")
             ],
-            path: "Sources/PMT"
+            path: "Sources/PMT",
+            resources: [
+                .copy("Localizable.xcstrings")
+            ]
         )
     ]
 )

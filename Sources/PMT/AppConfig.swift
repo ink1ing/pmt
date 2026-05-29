@@ -17,114 +17,11 @@ enum AppLanguage: String, CaseIterable, Codable, Identifiable {
     }
 
     func text(_ key: LocalizedKey) -> String {
-        switch (self, key) {
-        case (.zhHans, .api): "模型"
-        case (.english, .api): "Model"
-        case (.zhHans, .customEndpoint): "OpenAI"
-        case (.english, .customEndpoint): "OpenAI"
-        case (.zhHans, .githubOAuth): "GitHub"
-        case (.english, .githubOAuth): "GitHub"
-        case (.zhHans, .endpointURL): "端点 URL"
-        case (.english, .endpointURL): "Endpoint URL"
-        case (.zhHans, .apiKey): "API"
-        case (.english, .apiKey): "API"
-        case (.zhHans, .requestAuthorization): "授权"
-        case (.english, .requestAuthorization): "Authorize"
-        case (.zhHans, .logout): "退出"
-        case (.english, .logout): "Log Out"
-        case (.zhHans, .currentAccount): "当前账号"
-        case (.english, .currentAccount): "Current Account"
-        case (.zhHans, .notAuthorized): "未授权"
-        case (.english, .notAuthorized): "Not authorized"
-        case (.zhHans, .model): "模型"
-        case (.english, .model): "Model"
-        case (.zhHans, .currentModel): "当前模型"
-        case (.english, .currentModel): "Current Model"
-        case (.zhHans, .unselected): "未选择"
-        case (.english, .unselected): "Not selected"
-        case (.zhHans, .loadModels): "读取模型"
-        case (.english, .loadModels): "Load Models"
-        case (.zhHans, .testModel): "测试模型"
-        case (.english, .testModel): "Test Model"
-        case (.zhHans, .manualModelID): "手动模型 ID"
-        case (.english, .manualModelID): "Manual Model ID"
-        case (.zhHans, .saveAPI): "保存 API"
-        case (.english, .saveAPI): "Save API"
-        case (.zhHans, .prompt): "提示词"
-        case (.english, .prompt): "Prompt"
-        case (.zhHans, .savePrompt): "保存 Prompt"
-        case (.english, .savePrompt): "Save Prompt"
-        case (.zhHans, .hotkey): "快捷键"
-        case (.english, .hotkey): "Hotkey"
-        case (.zhHans, .hotkeyAndPrompt): "快捷键和提示词"
-        case (.english, .hotkeyAndPrompt): "Hotkey and Prompt"
-        case (.zhHans, .restoreControlX): "恢复 Ctrl + X"
-        case (.english, .restoreControlX): "Reset to Ctrl + X"
-        case (.zhHans, .saveHotkey): "保存快捷键"
-        case (.english, .saveHotkey): "Save Hotkey"
-        case (.zhHans, .statusBar): "悬浮图标"
-        case (.english, .statusBar): "Floating Icon"
-        case (.zhHans, .showStatusBarIcon): "悬浮图标"
-        case (.english, .showStatusBarIcon): "Floating Icon"
-        case (.zhHans, .permissions): "权限"
-        case (.english, .permissions): "Permissions"
-        case (.zhHans, .checkPermissions): "检查权限"
-        case (.english, .checkPermissions): "Check Permissions"
-        case (.zhHans, .requestAccessibility): "请求辅助功能权限"
-        case (.english, .requestAccessibility): "Request Accessibility"
-        case (.zhHans, .requestInputMonitoring): "请求输入监控权限"
-        case (.english, .requestInputMonitoring): "Request Input Monitoring"
-        case (.zhHans, .checkKeyboardPermissions): "检查键盘权限"
-        case (.english, .checkKeyboardPermissions): "Check Keyboard Permissions"
-        case (.zhHans, .restartHotkeyMonitor): "重启热键监听"
-        case (.english, .restartHotkeyMonitor): "Restart Hotkey Monitor"
-        case (.zhHans, .showLogs): "日志"
-        case (.english, .showLogs): "Logs"
-        case (.zhHans, .checkForUpdates): "检查更新"
-        case (.english, .checkForUpdates): "Check for Updates"
-        case (.zhHans, .previewFeature): "预览功能"
-        case (.english, .previewFeature): "Preview"
-        case (.zhHans, .dictationHotkey): "语音快捷键和模型"
-        case (.english, .dictationHotkey): "Dictation Hotkey and Model"
-        case (.zhHans, .whisperModel): "模型"
-        case (.english, .whisperModel): "Model"
-        case (.zhHans, .downloadProgress): "下载"
-        case (.english, .downloadProgress): "Download"
-        case (.zhHans, .prepareProgress): "准备"
-        case (.english, .prepareProgress): "Prepare"
-        case (.zhHans, .prepareWhisperModel): "准备模型"
-        case (.english, .prepareWhisperModel): "Prepare Model"
-        case (.zhHans, .deleteWhisperModel): "删除模型"
-        case (.english, .deleteWhisperModel): "Delete Model"
-        case (.zhHans, .appleSiliconOnly): "仅支持 M 芯片"
-        case (.english, .appleSiliconOnly): "Apple Silicon only"
-        case (.zhHans, .logs): "日志"
-        case (.english, .logs): "Logs"
-        case (.zhHans, .clear): "清空"
-        case (.english, .clear): "Clear"
-        case (.zhHans, .language): "语言"
-        case (.english, .language): "Language"
-        case (.zhHans, .otherFeatures): "其他功能"
-        case (.english, .otherFeatures): "Other Features"
-        case (.zhHans, .saveLanguage): "保存语言"
-        case (.english, .saveLanguage): "Save Language"
-        case (.zhHans, .saveAll): "保存"
-        case (.english, .saveAll): "Save"
-        case (.zhHans, .quitApp): "退出"
-        case (.english, .quitApp): "Quit"
-        case (.zhHans, .usage): "使用说明"
-        case (.english, .usage): "Usage"
-        case (.zhHans, .usageStepPermissionsAndModel): "1. 配置权限和模型"
-        case (.english, .usageStepPermissionsAndModel): "1. Permissions/model"
-        case (.zhHans, .usageStepPromptAndHotkey): "2. 配置快捷键和提示词"
-        case (.english, .usageStepPromptAndHotkey): "2. Hotkey/prompt"
-        case (.zhHans, .usageStepRewrite): "3. 选中文字并改写"
-        case (.english, .usageStepRewrite): "3. Select and rewrite"
-        }
+        Localized.string(key.rawValue, self)
     }
 }
 
-enum LocalizedKey {
+enum LocalizedKey: String {
     case api, customEndpoint, githubOAuth, endpointURL, apiKey, requestAuthorization, logout, currentAccount, notAuthorized
     case model, currentModel, unselected, loadModels, testModel, manualModelID, saveAPI
     case prompt, savePrompt
@@ -132,9 +29,47 @@ enum LocalizedKey {
     case statusBar, showStatusBarIcon
     case permissions, checkPermissions, requestAccessibility, requestInputMonitoring
     case checkKeyboardPermissions, restartHotkeyMonitor
-    case showLogs, checkForUpdates, previewFeature, dictationHotkey, whisperModel, downloadProgress, prepareProgress, prepareWhisperModel, deleteWhisperModel, appleSiliconOnly, logs, clear
+    case showLogs, checkForUpdates, previewFeature
+    case adviceFeature, enableAdvice, adviceFrequency, adviceTime, adviceDetail, advicePath, generateAdviceNow, telegramPush, telegramBotToken, telegramChatID
+    case dictationHotkey, whisperModel, downloadProgress, prepareProgress, prepareWhisperModel, deleteWhisperModel, appleSiliconOnly, logs, clear
     case language, otherFeatures, saveLanguage, saveAll, quitApp
     case usage, usageStepPermissionsAndModel, usageStepPromptAndHotkey, usageStepRewrite
+    case streamingMode, rewriteNow, preset, settings
+}
+
+enum AdviceFrequency: String, CaseIterable, Codable, Identifiable {
+    case manual
+    case daily
+    case weekly
+
+    var id: String { rawValue }
+
+    func title(language: AppLanguage) -> String {
+        Localized.string("adviceFrequency.\(rawValue)", language)
+    }
+}
+
+enum AdviceDetail: String, CaseIterable, Codable, Identifiable {
+    case minimal
+    case brief
+    case standard
+
+    var id: String { rawValue }
+
+    func title(language: AppLanguage) -> String {
+        Localized.string("adviceDetail.\(rawValue)", language)
+    }
+
+    var targetDescription: String {
+        switch self {
+        case .minimal:
+            "最多给出 1 条最高价值的改进；若无明显问题，只保留一句话总评。"
+        case .brief:
+            "最多给出 2 条改进，按影响力排序；若无明显问题则省略改进项。"
+        case .standard:
+            "最多给出 3 条改进，可在末尾附 1 条做得好的点；若无明显问题则明确写明无需调整。"
+        }
+    }
 }
 
 enum ModelProvider: String, CaseIterable, Codable, Identifiable {
@@ -161,20 +96,7 @@ enum RewriteMode: String, CaseIterable, Codable, Identifiable {
     var id: String { rawValue }
 
     func title(language: AppLanguage) -> String {
-        switch (language, self) {
-        case (.zhHans, .concise):
-            "谨慎"
-        case (.english, .concise):
-            "Cautious"
-        case (.zhHans, .standard):
-            "精确"
-        case (.english, .standard):
-            "Precise"
-        case (.zhHans, .custom):
-            "自定义"
-        case (.english, .custom):
-            "Custom"
-        }
+        Localized.string("rewriteMode.\(rawValue)", language)
     }
 
     var builtInPrompt: String? {
@@ -226,6 +148,12 @@ enum RewriteMode: String, CaseIterable, Codable, Identifiable {
             nil
         }
     }
+}
+
+struct RewritePreset: Codable, Equatable {
+    var model: String
+    var rewriteMode: RewriteMode
+    var systemPrompt: String
 }
 
 struct HotkeyConfig: Codable, Equatable {
@@ -391,17 +319,27 @@ struct HotkeyConfig: Codable, Equatable {
 struct AppConfig: Codable {
     var modelProvider: ModelProvider
     var endpointURL: String
-    var apiKey: String
-    var githubOAuthToken: String
     var githubAccountLogin: String
     var selectedModel: String
     var systemPrompt: String
     var rewriteMode: RewriteMode
     var hotkey: HotkeyConfig
+    var streamingEnabled: Bool
+    var presets: [RewritePreset]
+    var activePresetIndex: Int
     var previewEnabled: Bool
     var dictationHotkey: HotkeyConfig
     var whisperModel: String
     var whisperMetalAccelerationEnabled: Bool
+    var adviceEnabled: Bool
+    var adviceFrequency: AdviceFrequency
+    var adviceHour: Int
+    var adviceMinute: Int
+    var adviceDetail: AdviceDetail
+    var adviceFilePath: String
+    var telegramPushEnabled: Bool
+    var telegramChatID: String
+    var lastAdviceGeneratedAt: Date?
     var floatingIconEnabled: Bool
     var floatingIconPreferenceSaved: Bool
     var language: AppLanguage
@@ -409,17 +347,27 @@ struct AppConfig: Codable {
     enum CodingKeys: String, CodingKey {
         case modelProvider
         case endpointURL
-        case apiKey
-        case githubOAuthToken
         case githubAccountLogin
         case selectedModel
         case systemPrompt
         case rewriteMode
         case hotkey
+        case streamingEnabled
+        case presets
+        case activePresetIndex
         case previewEnabled
         case dictationHotkey
         case whisperModel
         case whisperMetalAccelerationEnabled
+        case adviceEnabled
+        case adviceFrequency
+        case adviceHour
+        case adviceMinute
+        case adviceDetail
+        case adviceFilePath
+        case telegramPushEnabled
+        case telegramChatID
+        case lastAdviceGeneratedAt
         case floatingIconEnabled = "statusBarIconEnabled"
         case floatingIconPreferenceSaved = "statusBarIconPreferenceSaved"
         case language
@@ -428,34 +376,54 @@ struct AppConfig: Codable {
     init(
         modelProvider: ModelProvider,
         endpointURL: String,
-        apiKey: String,
-        githubOAuthToken: String,
         githubAccountLogin: String,
         selectedModel: String,
         systemPrompt: String,
         rewriteMode: RewriteMode,
         hotkey: HotkeyConfig,
+        streamingEnabled: Bool,
+        presets: [RewritePreset],
+        activePresetIndex: Int,
         previewEnabled: Bool,
         dictationHotkey: HotkeyConfig,
         whisperModel: String,
         whisperMetalAccelerationEnabled: Bool,
+        adviceEnabled: Bool,
+        adviceFrequency: AdviceFrequency,
+        adviceHour: Int,
+        adviceMinute: Int,
+        adviceDetail: AdviceDetail,
+        adviceFilePath: String,
+        telegramPushEnabled: Bool,
+        telegramChatID: String,
+        lastAdviceGeneratedAt: Date?,
         floatingIconEnabled: Bool,
         floatingIconPreferenceSaved: Bool,
         language: AppLanguage
     ) {
         self.modelProvider = modelProvider
         self.endpointURL = endpointURL
-        self.apiKey = apiKey
-        self.githubOAuthToken = githubOAuthToken
         self.githubAccountLogin = githubAccountLogin
         self.selectedModel = selectedModel
         self.systemPrompt = systemPrompt
         self.rewriteMode = rewriteMode
         self.hotkey = hotkey
+        self.streamingEnabled = streamingEnabled
+        self.presets = presets
+        self.activePresetIndex = activePresetIndex
         self.previewEnabled = previewEnabled
         self.dictationHotkey = dictationHotkey
         self.whisperModel = whisperModel
         self.whisperMetalAccelerationEnabled = whisperMetalAccelerationEnabled
+        self.adviceEnabled = adviceEnabled
+        self.adviceFrequency = adviceFrequency
+        self.adviceHour = adviceHour
+        self.adviceMinute = adviceMinute
+        self.adviceDetail = adviceDetail
+        self.adviceFilePath = adviceFilePath
+        self.telegramPushEnabled = telegramPushEnabled
+        self.telegramChatID = telegramChatID
+        self.lastAdviceGeneratedAt = lastAdviceGeneratedAt
         self.floatingIconEnabled = floatingIconEnabled
         self.floatingIconPreferenceSaved = floatingIconPreferenceSaved
         self.language = language
@@ -465,17 +433,33 @@ struct AppConfig: Codable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         modelProvider = try container.decodeIfPresent(ModelProvider.self, forKey: .modelProvider) ?? .customEndpoint
         endpointURL = try container.decodeIfPresent(String.self, forKey: .endpointURL) ?? Self.defaults.endpointURL
-        apiKey = try container.decodeIfPresent(String.self, forKey: .apiKey) ?? ""
-        githubOAuthToken = try container.decodeIfPresent(String.self, forKey: .githubOAuthToken) ?? ""
         githubAccountLogin = try container.decodeIfPresent(String.self, forKey: .githubAccountLogin) ?? ""
         selectedModel = try container.decodeIfPresent(String.self, forKey: .selectedModel) ?? Self.defaults.selectedModel
         systemPrompt = try container.decodeIfPresent(String.self, forKey: .systemPrompt) ?? Self.defaults.systemPrompt
         rewriteMode = try container.decodeIfPresent(RewriteMode.self, forKey: .rewriteMode) ?? Self.defaults.rewriteMode
         hotkey = try container.decodeIfPresent(HotkeyConfig.self, forKey: .hotkey) ?? Self.defaults.hotkey
+        streamingEnabled = try container.decodeIfPresent(Bool.self, forKey: .streamingEnabled) ?? false
+        let basePreset = RewritePreset(model: selectedModel, rewriteMode: rewriteMode, systemPrompt: systemPrompt)
+        var decodedPresets = try container.decodeIfPresent([RewritePreset].self, forKey: .presets) ?? [basePreset, basePreset, basePreset]
+        if decodedPresets.isEmpty { decodedPresets = [basePreset, basePreset, basePreset] }
+        while decodedPresets.count < 3 { decodedPresets.append(basePreset) }
+        if decodedPresets.count > 3 { decodedPresets = Array(decodedPresets.prefix(3)) }
+        presets = decodedPresets
+        let decodedIndex = try container.decodeIfPresent(Int.self, forKey: .activePresetIndex) ?? 0
+        activePresetIndex = min(max(decodedIndex, 0), decodedPresets.count - 1)
         previewEnabled = try container.decodeIfPresent(Bool.self, forKey: .previewEnabled) ?? false
         dictationHotkey = try container.decodeIfPresent(HotkeyConfig.self, forKey: .dictationHotkey) ?? .defaultControlD
         whisperModel = try container.decodeIfPresent(String.self, forKey: .whisperModel) ?? "base"
         whisperMetalAccelerationEnabled = try container.decodeIfPresent(Bool.self, forKey: .whisperMetalAccelerationEnabled) ?? true
+        adviceEnabled = try container.decodeIfPresent(Bool.self, forKey: .adviceEnabled) ?? false
+        adviceFrequency = try container.decodeIfPresent(AdviceFrequency.self, forKey: .adviceFrequency) ?? .daily
+        adviceHour = try container.decodeIfPresent(Int.self, forKey: .adviceHour) ?? 22
+        adviceMinute = try container.decodeIfPresent(Int.self, forKey: .adviceMinute) ?? 0
+        adviceDetail = try container.decodeIfPresent(AdviceDetail.self, forKey: .adviceDetail) ?? .brief
+        adviceFilePath = try container.decodeIfPresent(String.self, forKey: .adviceFilePath) ?? Self.defaultAdviceFilePath
+        telegramPushEnabled = try container.decodeIfPresent(Bool.self, forKey: .telegramPushEnabled) ?? false
+        telegramChatID = try container.decodeIfPresent(String.self, forKey: .telegramChatID) ?? ""
+        lastAdviceGeneratedAt = try container.decodeIfPresent(Date.self, forKey: .lastAdviceGeneratedAt)
         floatingIconEnabled = try container.decodeIfPresent(Bool.self, forKey: .floatingIconEnabled) ?? true
         floatingIconPreferenceSaved = try container.decodeIfPresent(Bool.self, forKey: .floatingIconPreferenceSaved) ?? false
         language = try container.decodeIfPresent(AppLanguage.self, forKey: .language) ?? .zhHans
@@ -484,19 +468,39 @@ struct AppConfig: Codable {
     static let defaults = AppConfig(
         modelProvider: .customEndpoint,
         endpointURL: "https://api.openai.com/v1",
-        apiKey: "",
-        githubOAuthToken: "",
         githubAccountLogin: "",
         selectedModel: "",
         systemPrompt: RewriteMode.standard.builtInPrompt ?? "",
         rewriteMode: .standard,
         hotkey: .defaultControlX,
+        streamingEnabled: false,
+        presets: Array(
+            repeating: RewritePreset(model: "", rewriteMode: .standard, systemPrompt: RewriteMode.standard.builtInPrompt ?? ""),
+            count: 3
+        ),
+        activePresetIndex: 0,
         previewEnabled: false,
         dictationHotkey: .defaultControlD,
         whisperModel: "base",
         whisperMetalAccelerationEnabled: true,
+        adviceEnabled: false,
+        adviceFrequency: .daily,
+        adviceHour: 22,
+        adviceMinute: 0,
+        adviceDetail: .brief,
+        adviceFilePath: AppConfig.defaultAdviceFilePath,
+        telegramPushEnabled: false,
+        telegramChatID: "",
+        lastAdviceGeneratedAt: nil,
         floatingIconEnabled: true,
         floatingIconPreferenceSaved: false,
         language: .zhHans
     )
+
+    static var defaultAdviceFilePath: String {
+        FileManager.default
+            .homeDirectoryForCurrentUser
+            .appending(path: "Documents/PMT/advice.md")
+            .path
+    }
 }

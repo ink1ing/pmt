@@ -64,6 +64,37 @@ struct OpenAICompatibleClient: PromptModelClient {
         return content
     }
 
+    func rewriteStream(text: String, model: String, systemPrompt: String, mode: RewriteMode) -> AsyncThrowingStream<String, Error> {
+        AsyncThrowingStream { continuation in
+            let task = Task {
+                do {
+                    guard !model.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                        throw PMTError.missingModel
+                    }
+                    var request = URLRequest(url: endpointURL.appending(path: "chat/completions"))
+                    request.httpMethod = "POST"
+                    request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+                    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                    let body = ChatCompletionRequest(
+                        model: model,
+                        messages: [
+                            .init(role: "system", content: systemPrompt),
+                            .init(role: "user", content: text)
+                        ],
+                        temperature: 0.2,
+                        stream: true
+                    )
+                    request.httpBody = try JSONEncoder().encode(body)
+                    try await ChatStreaming.run(request) { continuation.yield($0) }
+                    continuation.finish()
+                } catch {
+                    continuation.finish(throwing: error)
+                }
+            }
+            continuation.onTermination = { _ in task.cancel() }
+        }
+    }
+
     func testModelLatency(model: String, systemPrompt: String, mode: RewriteMode) async throws -> TimeInterval {
         let start = Date()
         _ = try await rewrite(
@@ -106,6 +137,7 @@ private struct ChatCompletionRequest: Encodable {
     let model: String
     let messages: [Message]
     let temperature: Double
+    var stream: Bool? = nil
 }
 
 private struct ChatCompletionResponse: Decodable {

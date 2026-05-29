@@ -175,18 +175,29 @@ final class DictationWorkflow {
                     languageCode: whisperLanguageCode
                 )
                 store.addLog("本地转写完成：\(transcript.count) 个字符")
+                store.recordAdviceInput(transcript, source: "dictation")
 
-                let organized: String
-                if shouldBypassRewrite(for: transcript) {
-                    organized = transcript
-                    store.addLog("语音内容较短，跳过远程结构化改写")
-                } else {
-                    store.addLog("开始请求远程模型进行结构化改写：\(store.selectedModel.isEmpty ? "未选择模型" : store.selectedModel)")
-                    organized = try await store.rewrite(text: transcript)
-                    store.addLog("远程模型结构化改写完成：\(organized.count) 个字符")
-                }
                 try await activateTargetApplication(targetApplication)
-                try paste(organized)
+                if !shouldBypassRewrite(for: transcript), store.streamingEnabled {
+                    store.addLog("开始流式结构化改写：\(store.selectedModel.isEmpty ? "未选择模型" : store.selectedModel)")
+                    var count = 0
+                    for try await delta in try store.rewriteStream(text: transcript) {
+                        TextInjector.typeText(delta)
+                        count += delta.count
+                    }
+                    store.addLog("流式输出完成：\(count) 个字符")
+                } else {
+                    let organized: String
+                    if shouldBypassRewrite(for: transcript) {
+                        organized = transcript
+                        store.addLog("语音内容较短，跳过远程结构化改写")
+                    } else {
+                        store.addLog("开始请求远程模型进行结构化改写：\(store.selectedModel.isEmpty ? "未选择模型" : store.selectedModel)")
+                        organized = try await store.rewrite(text: transcript)
+                        store.addLog("远程模型结构化改写完成：\(organized.count) 个字符")
+                    }
+                    try paste(organized)
+                }
                 store.statusMessage = store.language == .zhHans ? "语音内容已插入" : "Dictation inserted"
             } catch {
                 store.statusMessage = error.localizedDescription
@@ -205,17 +216,7 @@ final class DictationWorkflow {
 
     private func paste(_ text: String) throws {
         let snapshot = ClipboardSnapshot()
-        let pasteboard = NSPasteboard.general
-        pasteboard.clearContents()
-        guard pasteboard.setString(text, forType: .string) else {
-            throw PMTError.clipboard("无法写入剪贴板。")
-        }
-        Keyboard.pressCommandKey(9)
-        Task { @MainActor in
-            try? await Task.sleep(nanoseconds: 900_000_000)
-            snapshot.restore()
-            store.addLog("已恢复原剪贴板")
-        }
+        try TextInjector.paste(text, restoring: snapshot)
     }
 
     private func activateTargetApplication(_ application: NSRunningApplication?) async throws {

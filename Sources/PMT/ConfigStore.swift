@@ -13,6 +13,26 @@ struct LogEntry: Identifiable, Codable {
     }
 }
 
+struct AdviceHistoryEntry: Identifiable, Codable {
+    let id: UUID
+    let timestamp: Date
+    let source: String
+    let text: String
+
+    init(id: UUID = UUID(), timestamp: Date = Date(), source: String, text: String) {
+        self.id = id
+        self.timestamp = timestamp
+        self.source = source
+        self.text = text
+    }
+}
+
+private struct LegacySecrets: Decodable {
+    let apiKey: String?
+    let githubOAuthToken: String?
+    let telegramBotToken: String?
+}
+
 @MainActor
 final class ConfigStore: ObservableObject {
     @Published var modelProvider: ModelProvider
@@ -24,10 +44,23 @@ final class ConfigStore: ObservableObject {
     @Published var systemPrompt: String
     @Published var rewriteMode: RewriteMode
     @Published var hotkey: HotkeyConfig
+    @Published var streamingEnabled: Bool
+    @Published var presets: [RewritePreset]
+    @Published var activePresetIndex: Int
     @Published var previewEnabled: Bool
     @Published var dictationHotkey: HotkeyConfig
     @Published var whisperModel: String
     @Published var whisperMetalAccelerationEnabled: Bool
+    @Published var adviceEnabled: Bool
+    @Published var adviceFrequency: AdviceFrequency
+    @Published var adviceHour: Int
+    @Published var adviceMinute: Int
+    @Published var adviceDetail: AdviceDetail
+    @Published var adviceFilePath: String
+    @Published var telegramPushEnabled: Bool
+    @Published var telegramBotToken: String
+    @Published var telegramChatID: String
+    @Published var lastAdviceGeneratedAt: Date?
     @Published var whisperModelStatus: String = "未准备"
     @Published var whisperDownloadProgress: Double = 0
     @Published var whisperPreparationProgress: Double = 0
@@ -47,6 +80,7 @@ final class ConfigStore: ObservableObject {
     private let defaults: UserDefaults
     private let maxLogCount = 120
     private let floatingIconMigrationKey = "PMT.floatingIconMigration.v1"
+    private lazy var adviceEngine = AdviceEngine(store: self)
 
     private static let configSuiteName = "dev.pmt.PMT.shared"
     private static let legacyConfigSuiteName = "dev.pmt.PMT"
@@ -56,25 +90,42 @@ final class ConfigStore: ObservableObject {
         let legacyDefaults = UserDefaults(suiteName: Self.legacyConfigSuiteName)
 
         let config: AppConfig
+        let sourceData: Data?
         if let data = defaults.data(forKey: defaultsKey),
            let decoded = try? JSONDecoder().decode(AppConfig.self, from: data) {
             config = decoded
+            sourceData = data
         } else if let data = legacyDefaults?.data(forKey: defaultsKey),
                   let decoded = try? JSONDecoder().decode(AppConfig.self, from: data) {
             config = decoded
             defaults.set(data, forKey: defaultsKey)
+            sourceData = data
         } else if let data = UserDefaults.standard.data(forKey: defaultsKey),
                   let decoded = try? JSONDecoder().decode(AppConfig.self, from: data) {
             config = decoded
             defaults.set(data, forKey: defaultsKey)
+            sourceData = data
         } else {
             config = .defaults
+            sourceData = nil
         }
+
+        let legacySecrets = sourceData.flatMap { try? JSONDecoder().decode(LegacySecrets.self, from: $0) }
+        let keychainAPIKey = KeychainStore.string(for: KeychainStore.apiKeyAccount)
+        let keychainGitHubToken = KeychainStore.string(for: KeychainStore.githubOAuthTokenAccount)
+        let keychainTelegramToken = KeychainStore.string(for: KeychainStore.telegramBotTokenAccount)
+        let resolvedAPIKey = keychainAPIKey ?? legacySecrets?.apiKey ?? ""
+        let resolvedGitHubToken = keychainGitHubToken ?? legacySecrets?.githubOAuthToken ?? ""
+        let resolvedTelegramToken = keychainTelegramToken ?? legacySecrets?.telegramBotToken ?? ""
+        let needsSecretMigration =
+            (keychainAPIKey == nil && !resolvedAPIKey.isEmpty) ||
+            (keychainGitHubToken == nil && !resolvedGitHubToken.isEmpty) ||
+            (keychainTelegramToken == nil && !resolvedTelegramToken.isEmpty)
 
         modelProvider = config.modelProvider
         endpointURL = config.endpointURL
-        apiKey = config.apiKey
-        githubOAuthToken = config.githubOAuthToken
+        apiKey = resolvedAPIKey
+        githubOAuthToken = resolvedGitHubToken
         githubAccountLogin = config.githubAccountLogin
         selectedModel = config.selectedModel
         systemPrompt = config.systemPrompt
@@ -92,8 +143,23 @@ final class ConfigStore: ObservableObject {
         }
         previewEnabled = config.previewEnabled
         dictationHotkey = config.dictationHotkey
+        streamingEnabled = config.streamingEnabled
+        presets = config.presets
+        activePresetIndex = config.activePresetIndex
         whisperModel = config.whisperModel
         whisperMetalAccelerationEnabled = true
+        adviceEnabled = config.adviceEnabled
+        adviceFrequency = config.adviceFrequency
+        adviceHour = min(max(config.adviceHour, 0), 23)
+        adviceMinute = min(max(config.adviceMinute, 0), 59)
+        adviceDetail = config.adviceDetail
+        adviceFilePath = config.adviceFilePath.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            ? AppConfig.defaultAdviceFilePath
+            : config.adviceFilePath
+        telegramPushEnabled = config.telegramPushEnabled
+        telegramBotToken = resolvedTelegramToken
+        telegramChatID = config.telegramChatID
+        lastAdviceGeneratedAt = config.lastAdviceGeneratedAt
         let shouldMigrateFloatingIcon = defaults.object(forKey: floatingIconMigrationKey) == nil
         let shouldRestoreDefaultFloatingIcon = !config.floatingIconPreferenceSaved || shouldMigrateFloatingIcon
         floatingIconEnabled = shouldRestoreDefaultFloatingIcon ? true : config.floatingIconEnabled
@@ -123,23 +189,40 @@ final class ConfigStore: ObservableObject {
             saveConfig()
             addLog("已恢复悬浮图标默认开启")
         }
+
+        if needsSecretMigration {
+            saveConfig()
+            addLog("已将明文密钥迁移到 Keychain")
+        }
+
+        startAdviceSchedule()
     }
 
     var config: AppConfig {
         AppConfig(
             modelProvider: modelProvider,
             endpointURL: endpointURL,
-            apiKey: apiKey,
-            githubOAuthToken: githubOAuthToken,
             githubAccountLogin: githubAccountLogin,
             selectedModel: selectedModel,
             systemPrompt: systemPrompt,
             rewriteMode: rewriteMode,
             hotkey: hotkey,
+            streamingEnabled: streamingEnabled,
+            presets: presets,
+            activePresetIndex: activePresetIndex,
             previewEnabled: previewEnabled,
             dictationHotkey: dictationHotkey,
             whisperModel: whisperModel,
             whisperMetalAccelerationEnabled: whisperMetalAccelerationEnabled,
+            adviceEnabled: adviceEnabled,
+            adviceFrequency: adviceFrequency,
+            adviceHour: adviceHour,
+            adviceMinute: adviceMinute,
+            adviceDetail: adviceDetail,
+            adviceFilePath: adviceFilePath,
+            telegramPushEnabled: telegramPushEnabled,
+            telegramChatID: telegramChatID,
+            lastAdviceGeneratedAt: lastAdviceGeneratedAt,
             floatingIconEnabled: floatingIconEnabled,
             floatingIconPreferenceSaved: floatingIconPreferenceSaved,
             language: language
@@ -147,11 +230,32 @@ final class ConfigStore: ObservableObject {
     }
 
     func saveConfig() {
+        if presets.indices.contains(activePresetIndex) {
+            presets[activePresetIndex] = RewritePreset(model: selectedModel, rewriteMode: rewriteMode, systemPrompt: systemPrompt)
+        }
         if let data = try? JSONEncoder().encode(config) {
             defaults.set(data, forKey: defaultsKey)
             defaults.synchronize()
         }
+        KeychainStore.set(apiKey, for: KeychainStore.apiKeyAccount)
+        KeychainStore.set(githubOAuthToken, for: KeychainStore.githubOAuthTokenAccount)
+        KeychainStore.set(telegramBotToken, for: KeychainStore.telegramBotTokenAccount)
         addLog("配置已保存")
+    }
+
+    func switchPreset(to index: Int) {
+        guard presets.indices.contains(index) else { return }
+        if presets.indices.contains(activePresetIndex) {
+            presets[activePresetIndex] = RewritePreset(model: selectedModel, rewriteMode: rewriteMode, systemPrompt: systemPrompt)
+        }
+        activePresetIndex = index
+        let preset = presets[index]
+        selectedModel = preset.model
+        rewriteMode = preset.rewriteMode
+        systemPrompt = preset.systemPrompt
+        saveConfig()
+        statusMessage = language == .zhHans ? "已切换到预设 \(index + 1)" : "Switched to preset \(index + 1)"
+        addLog(statusMessage)
     }
 
     func saveAPISection() {
@@ -248,6 +352,27 @@ final class ConfigStore: ObservableObject {
             systemPrompt: activeSystemPrompt,
             mode: rewriteMode
         )
+    }
+
+    func rewriteStream(text: String) throws -> AsyncThrowingStream<String, Error> {
+        try modelClient().rewriteStream(
+            text: text,
+            model: selectedModel,
+            systemPrompt: activeSystemPrompt,
+            mode: rewriteMode
+        )
+    }
+
+    func recordAdviceInput(_ text: String, source: String) {
+        adviceEngine.recordInput(text, source: source)
+    }
+
+    func generateAdviceNow() async {
+        await adviceEngine.generateNow()
+    }
+
+    private func startAdviceSchedule() {
+        adviceEngine.start()
     }
 
     func authorizeGitHubCopilot() async {

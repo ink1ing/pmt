@@ -45,6 +45,8 @@ struct SettingsView: View {
             Divider()
             promptAndHotkeySection
             Divider()
+            adviceSection
+            Divider()
             previewSection
             Divider()
             bottomSection
@@ -210,6 +212,102 @@ struct SettingsView: View {
                 store.addLog(message)
             }
         }
+    }
+
+    private var adviceSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .center, spacing: 10) {
+                Toggle(language.text(.enableAdvice), isOn: $store.adviceEnabled)
+                    .toggleStyle(.checkbox)
+                    .font(.headline)
+                    .onChange(of: store.adviceEnabled) {
+                        store.saveConfig()
+                        onSave()
+                    }
+
+                Spacer(minLength: 12)
+
+                Button(language.text(.generateAdviceNow)) {
+                    Task { await store.generateAdviceNow() }
+                }
+                .disabled(store.isBusy)
+            }
+
+            if store.adviceEnabled {
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack(alignment: .center, spacing: 10) {
+                        Text(language.text(.adviceFeature))
+                            .font(.headline)
+                        Spacer(minLength: 12)
+                        Picker(language.text(.adviceFrequency), selection: $store.adviceFrequency) {
+                            ForEach(AdviceFrequency.allCases) { frequency in
+                                Text(frequency.title(language: language)).tag(frequency)
+                            }
+                        }
+                        .labelsHidden()
+                        .pickerStyle(.segmented)
+                        .frame(width: 150)
+
+                        Picker(language.text(.adviceDetail), selection: $store.adviceDetail) {
+                            ForEach(AdviceDetail.allCases) { detail in
+                                Text(detail.title(language: language)).tag(detail)
+                            }
+                        }
+                        .labelsHidden()
+                        .pickerStyle(.segmented)
+                        .frame(width: 170)
+
+                        DatePicker(
+                            "",
+                            selection: adviceTimeBinding,
+                            displayedComponents: .hourAndMinute
+                        )
+                        .labelsHidden()
+                        .frame(width: 78)
+                        .disabled(store.adviceFrequency == .manual)
+                    }
+
+                    TextField(language.text(.advicePath), text: $store.adviceFilePath)
+                        .textFieldStyle(.roundedBorder)
+
+                    HStack(alignment: .center, spacing: 10) {
+                        Toggle(language.text(.telegramPush), isOn: $store.telegramPushEnabled)
+                            .toggleStyle(.checkbox)
+
+                        SecureField(language.text(.telegramBotToken), text: $store.telegramBotToken)
+                            .textFieldStyle(.roundedBorder)
+                            .disabled(!store.telegramPushEnabled)
+
+                        TextField(language.text(.telegramChatID), text: $store.telegramChatID)
+                            .textFieldStyle(.roundedBorder)
+                            .disabled(!store.telegramPushEnabled)
+                    }
+                    .onChange(of: store.adviceFrequency) { store.saveConfig() }
+                    .onChange(of: store.adviceDetail) { store.saveConfig() }
+                    .onChange(of: store.adviceFilePath) { store.saveConfig() }
+                    .onChange(of: store.telegramPushEnabled) { store.saveConfig() }
+                    .onChange(of: store.telegramBotToken) { store.saveConfig() }
+                    .onChange(of: store.telegramChatID) { store.saveConfig() }
+                }
+            }
+        }
+    }
+
+    private var adviceTimeBinding: Binding<Date> {
+        Binding(
+            get: {
+                var components = Calendar.current.dateComponents([.year, .month, .day], from: Date())
+                components.hour = store.adviceHour
+                components.minute = store.adviceMinute
+                return Calendar.current.date(from: components) ?? Date()
+            },
+            set: { date in
+                let components = Calendar.current.dateComponents([.hour, .minute], from: date)
+                store.adviceHour = components.hour ?? 22
+                store.adviceMinute = components.minute ?? 0
+                store.saveConfig()
+            }
+        )
     }
 
     private var logSection: some View {

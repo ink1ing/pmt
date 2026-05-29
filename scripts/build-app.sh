@@ -34,6 +34,10 @@ if [ -f "$ROOT_DIR/Resources/AppIcon.icns" ]; then
   cp "$ROOT_DIR/Resources/AppIcon.icns" "$RESOURCES_DIR/AppIcon.icns"
 fi
 
+if [ -d "$ROOT_DIR/.build/release/PMT_PMT.bundle" ]; then
+  ditto "$ROOT_DIR/.build/release/PMT_PMT.bundle" "$RESOURCES_DIR/PMT_PMT.bundle"
+fi
+
 SPARKLE_FRAMEWORK="$ROOT_DIR/.build/release/Sparkle.framework"
 if [ -d "$SPARKLE_FRAMEWORK" ]; then
   ditto "$SPARKLE_FRAMEWORK" "$FRAMEWORKS_DIR/Sparkle.framework"
