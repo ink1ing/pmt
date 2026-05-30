@@ -154,11 +154,15 @@ final class DictationWorkflow {
         isProcessing = true
         activityIndicator.show(symbol: "✍️")
         store.statusMessage = store.language == .zhHans ? "正在整理语音..." : "Processing dictation..."
+        let target = targetApplication
 
         Task {
+            var succeeded = false
+            var transcript: String?
             defer {
+                let done = succeeded
                 Task { @MainActor in
-                    self.activityIndicator.hide()
+                    self.activityIndicator.hide(completed: done)
                     self.isProcessing = false
                 }
             }
@@ -168,47 +172,88 @@ final class DictationWorkflow {
                 DictationSoundPlayer.shared.playEnd()
                 defer { try? FileManager.default.removeItem(at: audioURL) }
                 store.addLog("录音结束，开始本地转写：\(audioURL.lastPathComponent)")
-                let transcript = try await transcriber.transcribe(
+                let text = try await transcriber.transcribe(
                     audioURL: audioURL,
                     model: store.whisperModel,
                     metalAccelerationEnabled: store.whisperMetalAccelerationEnabled,
                     languageCode: whisperLanguageCode
                 )
-                store.addLog("本地转写完成：\(transcript.count) 个字符")
-                store.recordAdviceInput(transcript, source: "dictation")
+                store.addLog("本地转写完成：\(text.count) 个字符")
+                store.recordAdviceInput(text, source: "dictation")
+                transcript = text
 
-                try await activateTargetApplication(targetApplication)
-                let editable = FocusedField.hasEditableFocus()
-                if editable, !shouldBypassRewrite(for: transcript), store.streamingEnabled {
-                    store.addLog("开始流式结构化改写：\(store.selectedModel.isEmpty ? "未选择模型" : store.selectedModel)")
-                    var count = 0
-                    for try await delta in try store.rewriteStream(text: transcript) {
-                        TextInjector.typeText(delta)
-                        count += delta.count
-                    }
-                    store.addLog("流式输出完成：\(count) 个字符")
-                } else {
-                    let organized: String
-                    if shouldBypassRewrite(for: transcript) {
-                        organized = transcript
-                        store.addLog("语音内容较短，跳过远程结构化改写")
-                    } else {
-                        store.addLog("开始请求远程模型进行结构化改写：\(store.selectedModel.isEmpty ? "未选择模型" : store.selectedModel)")
-                        organized = try await store.rewrite(text: transcript)
-                        store.addLog("远程模型结构化改写完成：\(organized.count) 个字符")
-                    }
-                    if editable {
-                        try paste(organized)
-                    } else {
-                        ResultPopup.shared.show(text: organized, language: store.language)
-                        store.addLog("无活跃输入框，已弹出结果窗口")
-                    }
-                }
+                try await organizeAndDeliver(transcript: text, targetApplication: target)
                 store.statusMessage = store.language == .zhHans ? "语音内容已插入" : "Dictation inserted"
+                succeeded = true
             } catch {
                 store.statusMessage = error.localizedDescription
                 store.addLog("语音听写失败：\(error.localizedDescription)")
-                Notifier.shared.error(error.localizedDescription)
+                if let transcript {
+                    FailurePrompt.shared.show(message: error.localizedDescription, language: store.language) { [weak self] in
+                        self?.retryDeliver(transcript: transcript, targetApplication: target)
+                    }
+                } else {
+                    Notifier.shared.error(error.localizedDescription)
+                }
+            }
+        }
+    }
+
+    private func retryDeliver(transcript: String, targetApplication: NSRunningApplication?) {
+        guard !isProcessing else { return }
+        isProcessing = true
+        activityIndicator.show(symbol: "✍️")
+
+        Task {
+            var succeeded = false
+            defer {
+                let done = succeeded
+                Task { @MainActor in
+                    self.activityIndicator.hide(completed: done)
+                    self.isProcessing = false
+                }
+            }
+
+            do {
+                try await organizeAndDeliver(transcript: transcript, targetApplication: targetApplication)
+                store.statusMessage = store.language == .zhHans ? "语音内容已插入" : "Dictation inserted"
+                succeeded = true
+            } catch {
+                store.statusMessage = error.localizedDescription
+                store.addLog("语音整理失败：\(error.localizedDescription)")
+                FailurePrompt.shared.show(message: error.localizedDescription, language: store.language) { [weak self] in
+                    self?.retryDeliver(transcript: transcript, targetApplication: targetApplication)
+                }
+            }
+        }
+    }
+
+    private func organizeAndDeliver(transcript: String, targetApplication: NSRunningApplication?) async throws {
+        try await activateTargetApplication(targetApplication)
+        let editable = FocusedField.hasEditableFocus()
+        if editable, !shouldBypassRewrite(for: transcript), store.streamingEnabled {
+            store.addLog("开始流式结构化改写：\(store.selectedModel.isEmpty ? "未选择模型" : store.selectedModel)")
+            var count = 0
+            for try await delta in try store.rewriteStream(text: transcript) {
+                TextInjector.typeText(delta)
+                count += delta.count
+            }
+            store.addLog("流式输出完成：\(count) 个字符")
+        } else {
+            let organized: String
+            if shouldBypassRewrite(for: transcript) {
+                organized = transcript
+                store.addLog("语音内容较短，跳过远程结构化改写")
+            } else {
+                store.addLog("开始请求远程模型进行结构化改写：\(store.selectedModel.isEmpty ? "未选择模型" : store.selectedModel)")
+                organized = try await store.rewrite(text: transcript)
+                store.addLog("远程模型结构化改写完成：\(organized.count) 个字符")
+            }
+            if editable {
+                try paste(organized)
+            } else {
+                ResultPopup.shared.show(text: organized, language: store.language)
+                store.addLog("无活跃输入框，已弹出结果窗口")
             }
         }
     }

@@ -34,8 +34,8 @@ final class RewriteActivityIndicator {
         startFollowing()
     }
 
-    /// 快速补满到 100% 并淡出，形成“已完成”的观感。
-    func hide() {
+    /// 完成时快速补满并淡出；失败时标红不补满直接淡出。
+    func hide(completed: Bool = true) {
         stopFollowing()
         guard let panel else { return }
         self.panel = nil
@@ -43,7 +43,7 @@ final class RewriteActivityIndicator {
             panel.orderOut(nil)
             return
         }
-        view.finish {
+        view.dismiss(completed: completed) {
             panel.orderOut(nil)
         }
     }
@@ -162,32 +162,36 @@ private final class ActivityProgressView: NSView {
         fill.add(animation, forKey: "progress")
     }
 
-    func finish(completion: @escaping () -> Void) {
+    func dismiss(completed: Bool, completion: @escaping () -> Void) {
         layoutSubtreeIfNeeded()
-        let current = fill.presentation()?.bounds.width ?? (trackWidth * 0.92)
-        fill.removeAnimation(forKey: "progress")
 
         CATransaction.begin()
         CATransaction.setCompletionBlock {
             MainActor.assumeIsolated { completion() }
         }
 
-        let grow = CABasicAnimation(keyPath: "bounds.size.width")
-        grow.fromValue = current
-        grow.toValue = trackWidth
-        grow.duration = 0.22
-        grow.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
-        grow.fillMode = .forwards
-        grow.isRemovedOnCompletion = false
-        fill.bounds.size.width = trackWidth
-        fill.add(grow, forKey: "finish")
+        if completed {
+            let current = fill.presentation()?.bounds.width ?? (trackWidth * 0.92)
+            fill.removeAnimation(forKey: "progress")
+            let grow = CABasicAnimation(keyPath: "bounds.size.width")
+            grow.fromValue = current
+            grow.toValue = trackWidth
+            grow.duration = 0.22
+            grow.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+            grow.fillMode = .forwards
+            grow.isRemovedOnCompletion = false
+            fill.bounds.size.width = trackWidth
+            fill.add(grow, forKey: "finish")
+        } else {
+            fill.backgroundColor = NSColor.systemRed.cgColor
+        }
 
         if let layer {
             let fade = CABasicAnimation(keyPath: "opacity")
             fade.fromValue = 1.0
             fade.toValue = 0.0
-            fade.beginTime = CACurrentMediaTime() + 0.16
-            fade.duration = 0.16
+            fade.beginTime = CACurrentMediaTime() + (completed ? 0.16 : 0.0)
+            fade.duration = completed ? 0.16 : 0.2
             fade.timingFunction = CAMediaTimingFunction(name: .easeIn)
             fade.fillMode = .forwards
             fade.isRemovedOnCompletion = false

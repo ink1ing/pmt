@@ -16,14 +16,26 @@ final class SelectionRewriter {
             store.addLog("忽略触发：上一次改写仍在执行")
             return
         }
+        store.addLog("收到改写触发，目标：\(FrontmostAppTracker.displayName(for: targetApplication))")
+        run(targetApplication: targetApplication, capturedText: nil, snapshot: ClipboardSnapshot())
+    }
+
+    /// capturedText 非空时跳过 Cmd+C 直接重试模型与投递；snapshot 贯穿重试以正确恢复剪贴板。
+    private func run(targetApplication: NSRunningApplication?, capturedText: String?, snapshot: ClipboardSnapshot) {
+        guard !isRunning else {
+            store.addLog("忽略触发：上一次改写仍在执行")
+            return
+        }
         isRunning = true
         activityIndicator.show()
-        store.addLog("收到改写触发，目标：\(FrontmostAppTracker.displayName(for: targetApplication))")
 
         Task {
+            var succeeded = false
+            var selectedText = capturedText
             defer {
+                let done = succeeded
                 Task { @MainActor in
-                    self.activityIndicator.hide()
+                    self.activityIndicator.hide(completed: done)
                     self.isRunning = false
                 }
             }
@@ -33,12 +45,16 @@ final class SelectionRewriter {
                 store.addLog("辅助功能权限检查通过")
                 store.saveConfig()
 
-                let snapshot = ClipboardSnapshot()
                 try await activateTargetApplication(targetApplication)
-                store.addLog("发送 Cmd+C 读取选中文本")
-                let selectedText = try await TextInjector.copySelection()
-                store.addLog("读取选中文本成功：\(selectedText.count) 个字符")
-                store.recordAdviceInput(selectedText, source: "rewrite")
+                if selectedText == nil {
+                    store.addLog("发送 Cmd+C 读取选中文本")
+                    let captured = try await TextInjector.copySelection()
+                    store.addLog("读取选中文本成功：\(captured.count) 个字符")
+                    store.recordAdviceInput(captured, source: "rewrite")
+                    selectedText = captured
+                }
+                guard let text = selectedText else { throw PMTError.noSelectedText }
+
                 store.addLog("开始请求模型：\(store.selectedModel.isEmpty ? "未选择模型" : store.selectedModel)")
                 try await activateTargetApplication(targetApplication)
 
@@ -46,13 +62,13 @@ final class SelectionRewriter {
                 if editable && store.streamingEnabled {
                     snapshot.restore()
                     var count = 0
-                    for try await delta in try store.rewriteStream(text: selectedText) {
+                    for try await delta in try store.rewriteStream(text: text) {
                         TextInjector.typeText(delta)
                         count += delta.count
                     }
                     store.addLog("流式输出完成：\(count) 个字符")
                 } else {
-                    let rewritten = try await store.rewrite(text: selectedText)
+                    let rewritten = try await store.rewrite(text: text)
                     store.addLog("模型返回成功：\(rewritten.count) 个字符")
                     if editable {
                         store.addLog("发送 Cmd+V 替换选中文本")
@@ -64,9 +80,13 @@ final class SelectionRewriter {
                         store.addLog("无活跃输入框，已弹出结果窗口")
                     }
                 }
+                succeeded = true
             } catch {
                 store.addLog("改写失败：\(error.localizedDescription)")
-                Notifier.shared.error(error.localizedDescription)
+                let captured = selectedText
+                FailurePrompt.shared.show(message: error.localizedDescription, language: store.language) { [weak self] in
+                    self?.run(targetApplication: targetApplication, capturedText: captured, snapshot: snapshot)
+                }
             }
         }
     }

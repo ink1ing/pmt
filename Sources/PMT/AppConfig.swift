@@ -39,6 +39,7 @@ enum LocalizedKey: String {
     case telegramStep1, telegramStep2, telegramStep3, telegramHint
     case telegramFetchChatID, telegramSendTest, done
     case resultTitle, copy, close
+    case failureTitle, retry, cancel
 }
 
 enum AdviceFrequency: String, CaseIterable, Codable, Identifiable {
