@@ -42,7 +42,8 @@ final class SelectionRewriter {
                 store.addLog("开始请求模型：\(store.selectedModel.isEmpty ? "未选择模型" : store.selectedModel)")
                 try await activateTargetApplication(targetApplication)
 
-                if store.streamingEnabled {
+                let editable = FocusedField.hasEditableFocus()
+                if editable && store.streamingEnabled {
                     snapshot.restore()
                     var count = 0
                     for try await delta in try store.rewriteStream(text: selectedText) {
@@ -53,9 +54,15 @@ final class SelectionRewriter {
                 } else {
                     let rewritten = try await store.rewrite(text: selectedText)
                     store.addLog("模型返回成功：\(rewritten.count) 个字符")
-                    store.addLog("发送 Cmd+V 替换选中文本")
-                    try TextInjector.paste(rewritten, restoring: snapshot)
-                    store.addLog("已粘贴替换文本")
+                    if editable {
+                        store.addLog("发送 Cmd+V 替换选中文本")
+                        try TextInjector.paste(rewritten, restoring: snapshot)
+                        store.addLog("已粘贴替换文本")
+                    } else {
+                        snapshot.restore()
+                        ResultPopup.shared.show(text: rewritten, language: store.language)
+                        store.addLog("无活跃输入框，已弹出结果窗口")
+                    }
                 }
             } catch {
                 store.addLog("改写失败：\(error.localizedDescription)")

@@ -258,6 +258,41 @@ final class ConfigStore: ObservableObject {
         addLog(statusMessage)
     }
 
+    func sendTelegramTest() async {
+        isBusy = true
+        defer { isBusy = false }
+        saveConfig()
+        do {
+            try await TelegramClient.sendMessage(
+                token: telegramBotToken,
+                chatID: telegramChatID,
+                text: language == .zhHans ? "PMT 测试消息：Telegram 接入成功。" : "PMT test message: Telegram is connected."
+            )
+            statusMessage = language == .zhHans ? "测试消息已发送" : "Test message sent"
+            addLog(statusMessage)
+        } catch {
+            statusMessage = error.localizedDescription
+            addLog((language == .zhHans ? "Telegram 测试失败：" : "Telegram test failed: ") + error.localizedDescription)
+            Notifier.shared.error(error.localizedDescription)
+        }
+    }
+
+    func fetchTelegramChatID() async {
+        isBusy = true
+        defer { isBusy = false }
+        do {
+            let chatID = try await TelegramClient.fetchChatID(token: telegramBotToken)
+            telegramChatID = chatID
+            saveConfig()
+            statusMessage = language == .zhHans ? "已获取 Chat ID：\(chatID)" : "Fetched Chat ID: \(chatID)"
+            addLog(statusMessage)
+        } catch {
+            statusMessage = error.localizedDescription
+            addLog((language == .zhHans ? "获取 Chat ID 失败：" : "Fetch Chat ID failed: ") + error.localizedDescription)
+            Notifier.shared.error(error.localizedDescription)
+        }
+    }
+
     func saveAPISection() {
         saveConfig()
         statusMessage = language == .zhHans ? "API 配置已保存" : "API settings saved"

@@ -178,7 +178,8 @@ final class DictationWorkflow {
                 store.recordAdviceInput(transcript, source: "dictation")
 
                 try await activateTargetApplication(targetApplication)
-                if !shouldBypassRewrite(for: transcript), store.streamingEnabled {
+                let editable = FocusedField.hasEditableFocus()
+                if editable, !shouldBypassRewrite(for: transcript), store.streamingEnabled {
                     store.addLog("开始流式结构化改写：\(store.selectedModel.isEmpty ? "未选择模型" : store.selectedModel)")
                     var count = 0
                     for try await delta in try store.rewriteStream(text: transcript) {
@@ -196,7 +197,12 @@ final class DictationWorkflow {
                         organized = try await store.rewrite(text: transcript)
                         store.addLog("远程模型结构化改写完成：\(organized.count) 个字符")
                     }
-                    try paste(organized)
+                    if editable {
+                        try paste(organized)
+                    } else {
+                        ResultPopup.shared.show(text: organized, language: store.language)
+                        store.addLog("无活跃输入框，已弹出结果窗口")
+                    }
                 }
                 store.statusMessage = store.language == .zhHans ? "语音内容已插入" : "Dictation inserted"
             } catch {

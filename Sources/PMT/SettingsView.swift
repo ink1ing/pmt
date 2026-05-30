@@ -5,6 +5,7 @@ struct SettingsView: View {
     @ObservedObject var store: ConfigStore
     let dictationWorkflow: DictationWorkflow?
     let onSave: () -> Void
+    @State private var showTelegramSetup = false
 
     private var language: AppLanguage { store.language }
     private let controlWidth: CGFloat = 240
@@ -53,6 +54,9 @@ struct SettingsView: View {
         }
         .padding(18)
         .frame(width: 560)
+        .sheet(isPresented: $showTelegramSetup) {
+            TelegramSetupView(store: store)
+        }
     }
 
     private var usageSection: some View {
@@ -274,20 +278,17 @@ struct SettingsView: View {
                         Toggle(language.text(.telegramPush), isOn: $store.telegramPushEnabled)
                             .toggleStyle(.checkbox)
 
-                        SecureField(language.text(.telegramBotToken), text: $store.telegramBotToken)
-                            .textFieldStyle(.roundedBorder)
-                            .disabled(!store.telegramPushEnabled)
+                        Spacer(minLength: 12)
 
-                        TextField(language.text(.telegramChatID), text: $store.telegramChatID)
-                            .textFieldStyle(.roundedBorder)
-                            .disabled(!store.telegramPushEnabled)
+                        Button(language.text(.telegramSetup)) {
+                            showTelegramSetup = true
+                        }
+                        .disabled(!store.telegramPushEnabled)
                     }
                     .onChange(of: store.adviceFrequency) { store.saveConfig() }
                     .onChange(of: store.adviceDetail) { store.saveConfig() }
                     .onChange(of: store.adviceFilePath) { store.saveConfig() }
                     .onChange(of: store.telegramPushEnabled) { store.saveConfig() }
-                    .onChange(of: store.telegramBotToken) { store.saveConfig() }
-                    .onChange(of: store.telegramChatID) { store.saveConfig() }
                 }
             }
         }

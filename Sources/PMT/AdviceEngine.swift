@@ -273,26 +273,7 @@ final class AdviceEngine {
     }
 
     private func sendTelegramMessage(_ message: String) async throws {
-        let token = store.telegramBotToken.trimmingCharacters(in: .whitespacesAndNewlines)
-        let chatID = store.telegramChatID.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !token.isEmpty, !chatID.isEmpty else {
-            throw PMTError.api(store.language == .zhHans ? "请先填写 Telegram Bot Token 和 Chat ID。" : "Set Telegram Bot Token and Chat ID first.")
-        }
-
-        guard let url = URL(string: "https://api.telegram.org/bot\(token)/sendMessage") else {
-            throw PMTError.api("Telegram URL 无效。")
-        }
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try JSONEncoder().encode(TelegramSendMessageRequest(chatID: chatID, text: message))
-
-        let (data, response) = try await URLSession.shared.data(for: request)
-        guard let http = response as? HTTPURLResponse, 200..<300 ~= http.statusCode else {
-            let body = String(data: data, encoding: .utf8) ?? "无响应内容"
-            throw PMTError.api("Telegram 推送失败：\(body)")
-        }
+        try await TelegramClient.sendMessage(token: store.telegramBotToken, chatID: store.telegramChatID, text: message)
         store.addLog(store.language == .zhHans ? "Telegram 建议推送完成" : "Telegram advice pushed")
     }
 }

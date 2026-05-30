@@ -1184,6 +1184,214 @@
           }
         }
       }
+    },
+    "telegramSetup": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Telegram Setup"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Telegram 设置"
+          }
+        }
+      }
+    },
+    "telegramSetupTitle": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connect Telegram"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "接入 Telegram"
+          }
+        }
+      }
+    },
+    "telegramSetupIntro": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Push prompt review summaries to your Telegram."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "把提示词评价总结主动推送到你的 Telegram。"
+          }
+        }
+      }
+    },
+    "telegramStep1": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1. In Telegram, open @BotFather, send /newbot to create a bot, and copy the Bot Token."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1. 在 Telegram 搜索 @BotFather，发送 /newbot 创建机器人，复制得到的 Bot Token。"
+          }
+        }
+      }
+    },
+    "telegramStep2": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "2. Send any message to your new bot first — a bot cannot message you until you start the chat."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "2. 先在 Telegram 给你新建的机器人发送任意一条消息（必须你先发起对话，机器人才能回发）。"
+          }
+        }
+      }
+    },
+    "telegramStep3": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "3. Enter the Bot Token, then tap “Fetch Chat ID” — or get it from @userinfobot and fill it in."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "3. 填入 Bot Token 后点击“自动获取 Chat ID”，或向 @userinfobot 索取后手动填写。"
+          }
+        }
+      }
+    },
+    "telegramHint": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The token is stored only in your local Keychain. Pushing needs network access; only the final summary is sent, never raw history."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Token 仅保存在本地钥匙串；推送需要联网；只发送最终总结，不发送原始历史。"
+          }
+        }
+      }
+    },
+    "telegramFetchChatID": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fetch Chat ID"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "自动获取 Chat ID"
+          }
+        }
+      }
+    },
+    "telegramSendTest": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Send Test Message"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "发送测试消息"
+          }
+        }
+      }
+    },
+    "done": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Done"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "完成"
+          }
+        }
+      }
+    },
+    "resultTitle": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Result"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "改写结果"
+          }
+        }
+      }
+    },
+    "copy": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "复制"
+          }
+        }
+      }
+    },
+    "close": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "关闭"
+          }
+        }
+      }
     }
   },
   "version": "1.0"
